@@ -186,6 +186,15 @@ The project follows a few simple rules:
 
 VoFlow is under active development.
 
+---
+
 ## License
 
-No license is currently specified in the repository.
+VoFlow is licensed under the **MIT License**.
+
+See [LICENSE](LICENSE) for the full license text.
+
+---
+
+> [!NOTE]
+> The core logic and application code were generated with **AI** under my supervision and direction.
