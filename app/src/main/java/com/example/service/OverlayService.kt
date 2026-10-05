@@ -79,7 +79,6 @@ import com.example.MainActivity
 import com.example.R
 import com.example.audio.AudioCaptureEngine
 import com.example.data.GeminiApiClient
-import com.example.data.DiagnosticsCollector
 import com.example.data.QuotaCooldownController
 import com.example.data.SecurePreferences
 import com.example.ui.theme.MyApplicationTheme
@@ -340,12 +339,7 @@ class OverlayService : Service() {
         val apiKey = securePreferences.getApiKey()
         val mode = securePreferences.getTranscriptionMode()
         val selectedModel = securePreferences.getSelectedModel()
-        DiagnosticsCollector.start(this, "Gemini transcription")
-        val result = try {
-            geminiApiClient.transcribeAudio(apiKey, file, mode, selectedModel)
-        } finally {
-            DiagnosticsCollector.stop()
-        }
+        val result = geminiApiClient.transcribeAudio(apiKey, file, mode, selectedModel)
         if (result.isSuccess) {
             val text = (result.getOrNull() ?: "").trim()
             if (text.isBlank()) {
