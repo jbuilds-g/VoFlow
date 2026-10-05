@@ -5,9 +5,9 @@ import android.content.Context
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Debug
-import android.os.SystemClock
+import android.os.PowerManager
 import android.os.Process
-import android.os.ThermalManager
+import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,7 +44,10 @@ object DiagnosticsCollector {
         DiagnosticLog.add("Diagnostics started: " + label)
         DiagnosticLog.add(deviceSnapshot(context))
         samplingJob = CoroutineScope(Dispatchers.Default).launch {
-            while (isActive) { sample(context); delay(SAMPLE_INTERVAL_MS) }
+            while (isActive) {
+                sample()
+                delay(SAMPLE_INTERVAL_MS)
+            }
         }
     }
 
@@ -67,7 +70,7 @@ object DiagnosticsCollector {
 
     fun logAudioFile(file: File) { DiagnosticLog.add("Audio file: " + file.length() + " bytes") }
 
-    private fun sample(context: Context) {
+    private fun sample() {
         val active = synchronized(this) { session } ?: return
         val nowElapsed = SystemClock.elapsedRealtime()
         val nowCpu = Process.getElapsedCpuTime()
@@ -88,20 +91,30 @@ object DiagnosticsCollector {
         val intent = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
         val rawTemp = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE) ?: Int.MIN_VALUE
         val temp = if (rawTemp != Int.MIN_VALUE) rawTemp / 10.0 else null
-        val thermal = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) context.getSystemService(ThermalManager::class.java)?.currentThermalStatus else null
+        val thermal = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            context.getSystemService(PowerManager::class.java)?.currentThermalStatus
+        } else null
         val activity = context.getSystemService(ActivityManager::class.java)
         val memory = ActivityManager.MemoryInfo().also { activity?.getMemoryInfo(it) }
         return "Device: Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + "); battery=" + (level?.let { "$it%" } ?: "n/a") + "; temp=" + (temp?.let { format(it) + "C" } ?: "n/a") + "; thermal=" + (thermal?.toString() ?: "n/a") + "; availMem=" + (memory.availMem / 1024 / 1024) + "MB; Shizuku=" + shizukuStatus()
     }
 
-    private fun shizukuStatus(): String = try {
-        if (!Shizuku.pingBinder()) return "not-running"
-        if (Shizuku.isPreV11()) return "pre-v11"
-        val granted = Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
-        val uid = runCatching { Shizuku.getUid() }.getOrDefault(-1)
-        val selinux = runCatching { Shizuku.getSELinuxContext() }.getOrNull()
-        "running,permission=" + (if (granted) "granted" else "not-granted") + ",uid=" + uid + ",context=" + (selinux ?: "n/a")
-    } catch (_: Exception) { "unavailable" }
+    private fun shizukuStatus(): String {
+        return try {
+            if (!Shizuku.pingBinder()) {
+                "not-running"
+            } else if (Shizuku.isPreV11()) {
+                "pre-v11"
+            } else {
+                val granted = Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
+                val uid = runCatching { Shizuku.getUid() }.getOrDefault(-1)
+                val selinux = runCatching { Shizuku.getSELinuxContext() }.getOrNull()
+                "running,permission=" + (if (granted) "granted" else "not-granted") + ",uid=" + uid + ",context=" + (selinux ?: "n/a")
+            }
+        } catch (_: Exception) {
+            "unavailable"
+        }
+    }
 
     private fun format(value: Double): String = String.format(Locale.US, "%.1f", value)
 }
