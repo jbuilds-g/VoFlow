@@ -100,7 +100,7 @@ object DiagnosticsCollector {
         val granted = Shizuku.checkSelfPermission() == android.content.pm.PackageManager.PERMISSION_GRANTED
         val uid = runCatching { Shizuku.getUid() }.getOrDefault(-1)
         val selinux = runCatching { Shizuku.getSELinuxContext() }.getOrNull()
-        "running,permission=" + if (granted) "granted" else "not-granted" + ",uid=" + uid + ",context=" + (selinux ?: "n/a")
+        "running,permission=" + (if (granted) "granted" else "not-granted") + ",uid=" + uid + ",context=" + (selinux ?: "n/a")
     } catch (_: Exception) { "unavailable" }
 
     private fun format(value: Double): String = String.format(Locale.US, "%.1f", value)
