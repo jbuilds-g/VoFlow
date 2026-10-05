@@ -1,6 +1,8 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.graphics.Bitmap
@@ -31,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Accessibility
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Layers
@@ -87,6 +90,7 @@ fun AboutScreen(
     val scrollState = rememberScrollState()
     val logEntries by DiagnosticLog.entries.collectAsState()
     var logsExpanded by remember { mutableStateOf(false) }
+    var logsCopied by remember { mutableStateOf(false) }
     var showLicenseDialog by remember { mutableStateOf(false) }
     var githubProfile by remember { mutableStateOf<GithubProfile?>(null) }
     var githubAvatar by remember { mutableStateOf<Bitmap?>(null) }
@@ -261,7 +265,16 @@ fun AboutScreen(
             expanded = logsExpanded,
             entries = logEntries,
             onToggle = { logsExpanded = !logsExpanded },
-            onClear = { DiagnosticLog.clear() }
+            onClear = { DiagnosticLog.clear() },
+            onCopy = {
+                val text = logEntries.joinToString("\\n") { entry ->
+                    "${entry.timestamp}  ${entry.message}"
+                }
+                val clipboard = context.getSystemService(ClipboardManager::class.java)
+                clipboard?.setPrimaryClip(ClipData.newPlainText("VoFlow diagnostic logs", text))
+                logsCopied = true
+            },
+            copyLabel = if (logsCopied) "Logs copied" else "Copy logs"
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -402,6 +415,8 @@ private fun DiagnosticLogsCard(
     entries: List<DiagnosticLog.Entry>,
     onToggle: () -> Unit,
     onClear: () -> Unit,
+    onCopy: () -> Unit,
+    copyLabel: String,
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -423,6 +438,9 @@ private fun DiagnosticLogsCard(
                     )
                 }
                 if (expanded && entries.isNotEmpty()) {
+                    IconButton(onClick = onCopy) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = copyLabel)
+                    }
                     IconButton(onClick = onClear) {
                         Icon(Icons.Rounded.DeleteSweep, contentDescription = "Clear logs")
                     }
