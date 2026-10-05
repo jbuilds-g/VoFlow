@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Debug
-import android.os.PackageManager
 import android.os.SystemClock
 import android.os.Process
 import android.os.ThermalManager
