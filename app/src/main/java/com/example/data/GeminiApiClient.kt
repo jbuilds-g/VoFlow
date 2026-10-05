@@ -13,7 +13,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.TimeUnit
-import android.os.SystemClock
 
 class GeminiApiClient {
     class NoSpeechDetectedException : Exception("No speech detected in the recording. Tap the mic and try again.")
@@ -60,13 +59,8 @@ class GeminiApiClient {
         try {
             val model = if (selectedModel == "auto") DEFAULT_MODEL else selectedModel.removePrefix("models/")
             DiagnosticLog.add("Using Gemini model: $model")
-            DiagnosticsCollector.logAudioFile(audioFile)
-            val encodeStart = SystemClock.elapsedRealtime()
             val base64Audio = Base64.encodeToString(audioFile.readBytes(), Base64.NO_WRAP)
-            DiagnosticsCollector.mark("Audio Base64 encoding: " + (SystemClock.elapsedRealtime() - encodeStart) + "ms")
-            val requestStart = SystemClock.elapsedRealtime()
             val result = executeAudioRequest(model, apiKey, base64Audio, mode)
-            DiagnosticsCollector.mark("Gemini request + parse: " + (SystemClock.elapsedRealtime() - requestStart) + "ms")
 
             if (result.isSuccess && result.getOrNull()?.trim().orEmpty().isNotBlank()) {
                 return@withContext Result.success(result.getOrNull()!!.trim())
