@@ -137,6 +137,7 @@ class AudioCaptureEngine(private val context: Context) {
     }
 
     private fun cleanup() {
+        DiagnosticsCollector.stop()
         try {
             mediaRecorder?.release()
         } catch (e: Exception) {
