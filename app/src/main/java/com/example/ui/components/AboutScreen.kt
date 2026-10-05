@@ -1,10 +1,13 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.graphics.Bitmap
-import android.graphics.Canvas
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -30,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Accessibility
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Layers
@@ -42,7 +46,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +56,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Color
 import com.example.BuildConfig
 import com.example.R
 import androidx.compose.ui.Alignment
@@ -60,6 +68,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.DiagnosticLog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 @Composable
 fun AboutScreen(
@@ -73,18 +86,22 @@ fun AboutScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val appIcon = remember {
-        val drawable = context.getDrawable(R.mipmap.ic_launcher)
-        Bitmap.createBitmap(104, 104, Bitmap.Config.ARGB_8888).also { bitmap ->
-            drawable?.setBounds(0, 0, bitmap.width, bitmap.height)
-            drawable?.draw(Canvas(bitmap))
-        }
-    }.asImageBitmap()
     val colorScheme = MaterialTheme.colorScheme
     val scrollState = rememberScrollState()
     val logEntries by DiagnosticLog.entries.collectAsState()
     var logsExpanded by remember { mutableStateOf(false) }
+    var logsCopied by remember { mutableStateOf(false) }
     var showLicenseDialog by remember { mutableStateOf(false) }
+    var githubProfile by remember { mutableStateOf<GithubProfile?>(null) }
+    var githubAvatar by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(Unit) {
+        val profile = fetchGithubProfile("jbuilds-g")
+        githubProfile = profile
+        if (profile?.avatarUrl != null) {
+            githubAvatar = fetchGithubAvatar(profile.avatarUrl)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -112,14 +129,18 @@ fun AboutScreen(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier.size(104.dp).clip(RoundedCornerShape(16.dp)).background(colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = colorScheme.primaryContainer,
+                        modifier = Modifier.size(104.dp)
                     ) {
-                        androidx.compose.foundation.Image(
-                            bitmap = appIcon,
-                            contentDescription = "VoFlow app icon",
-                            modifier = Modifier.fillMaxSize()
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
@@ -151,17 +172,34 @@ fun AboutScreen(
                             modifier = Modifier.size(52.dp).clip(CircleShape).background(colorScheme.secondaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Info,
-                                contentDescription = "GitHub profile",
-                                tint = colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(12.dp)
-                            )
+                            if (githubAvatar != null) {
+                                Image(
+                                    bitmap = githubAvatar!!.asImageBitmap(),
+                                    contentDescription = "GitHub profile picture",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_github),
+                                    contentDescription = "GitHub profile",
+                                    tint = colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
                         }
                         Spacer(modifier = Modifier.weight(1f))
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("JBuilds", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                            Text("@jbuilds-g", style = MaterialTheme.typography.bodySmall, color = colorScheme.onSurfaceVariant)
+                            Text(
+                                githubProfile?.name ?: "JBuilds",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                "@${githubProfile?.login ?: "jbuilds-g"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -178,7 +216,11 @@ fun AboutScreen(
                         modifier = Modifier.weight(1f),
                         shape = MaterialTheme.shapes.medium
                     ) {
-                        Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_github),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("View Source", maxLines = 1)
                     }
@@ -223,7 +265,16 @@ fun AboutScreen(
             expanded = logsExpanded,
             entries = logEntries,
             onToggle = { logsExpanded = !logsExpanded },
-            onClear = { DiagnosticLog.clear() }
+            onClear = { DiagnosticLog.clear() },
+            onCopy = {
+                val text = logEntries.joinToString("\\n") { entry ->
+                    "${entry.timestamp}  ${entry.message}"
+                }
+                val clipboard = context.getSystemService(ClipboardManager::class.java)
+                clipboard?.setPrimaryClip(ClipData.newPlainText("VoFlow diagnostic logs", text))
+                logsCopied = true
+            },
+            copyLabel = if (logsCopied) "Logs copied" else "Copy logs"
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -275,6 +326,53 @@ SOFTWARE.""",
     }
 }
 
+
+private data class GithubProfile(
+    val name: String?,
+    val login: String,
+    val avatarUrl: String?
+)
+
+private suspend fun fetchGithubProfile(login: String): GithubProfile? = withContext(Dispatchers.IO) {
+    runCatching {
+        val connection = (URL("https://api.github.com/users/$login").openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 5000
+            readTimeout = 5000
+            setRequestProperty("Accept", "application/vnd.github+json")
+            setRequestProperty("User-Agent", "VoFlow")
+        }
+        try {
+            if (connection.responseCode !in 200..299) return@runCatching null
+            val json = connection.inputStream.bufferedReader().use { reader -> reader.readText() }
+            val objectJson = JSONObject(json)
+            GithubProfile(
+                name = objectJson.optString("name").takeIf { value -> value.isNotBlank() },
+                login = objectJson.optString("login", login),
+                avatarUrl = objectJson.optString("avatar_url").takeIf { value -> value.isNotBlank() }
+            )
+        } finally {
+            connection.disconnect()
+        }
+    }.getOrNull()
+}
+
+private suspend fun fetchGithubAvatar(url: String): Bitmap? = withContext(Dispatchers.IO) {
+    runCatching {
+        val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 5000
+            readTimeout = 5000
+            setRequestProperty("User-Agent", "VoFlow")
+        }
+        try {
+            if (connection.responseCode !in 200..299) return@runCatching null
+            connection.inputStream.use(BitmapFactory::decodeStream)
+        } finally {
+            connection.disconnect()
+        }
+    }.getOrNull()
+}
+
 @Composable
 private fun AboutArchitectureCard(modifier: Modifier = Modifier) {
     val colorScheme = MaterialTheme.colorScheme
@@ -317,6 +415,8 @@ private fun DiagnosticLogsCard(
     entries: List<DiagnosticLog.Entry>,
     onToggle: () -> Unit,
     onClear: () -> Unit,
+    onCopy: () -> Unit,
+    copyLabel: String,
     modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -338,6 +438,9 @@ private fun DiagnosticLogsCard(
                     )
                 }
                 if (expanded && entries.isNotEmpty()) {
+                    IconButton(onClick = onCopy) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = copyLabel)
+                    }
                     IconButton(onClick = onClear) {
                         Icon(Icons.Rounded.DeleteSweep, contentDescription = "Clear logs")
                     }
@@ -348,7 +451,7 @@ private fun DiagnosticLogsCard(
                 Spacer(modifier = Modifier.height(12.dp))
                 if (entries.isEmpty()) {
                     Text(
-                        "Logs record model selection, fallback attempts, and errors. API keys, audio, and transcripts are never stored here.",
+                        "Logs record model selection, performance timings, device/thermal snapshots, Shizuku availability, fallback attempts, and errors. API keys, audio, and transcripts are never stored here.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant
                     )
