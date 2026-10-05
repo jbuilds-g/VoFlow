@@ -433,7 +433,7 @@ private fun DiagnosticLogsCard(
                 Spacer(modifier = Modifier.height(12.dp))
                 if (entries.isEmpty()) {
                     Text(
-                        "Logs record model selection, fallback attempts, and errors. API keys, audio, and transcripts are never stored here.",
+                        "Logs record model selection, performance timings, device/thermal snapshots, Shizuku availability, fallback attempts, and errors. API keys, audio, and transcripts are never stored here.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant
                     )
