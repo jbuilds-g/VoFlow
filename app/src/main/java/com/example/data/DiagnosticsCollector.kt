@@ -30,13 +30,17 @@ object DiagnosticsCollector {
         val startedAtMs: Long,
         val startCpuMs: Long,
         val startPssKb: Int,
-        val samples: MutableList<Sample> = mutableListOf()
+        val samples: MutableList<Sample> = mutableListOf(),
+        var lastCpuMs: Long = startCpuMs,
+        var lastElapsedMs: Long = startedAtMs
     )
 
     @Synchronized
     fun start(context: Context, label: String) {
         stop()
-        session = Session(label, SystemClock.elapsedRealtime(), Process.getElapsedCpuTime(), Debug.getPss().toInt())
+        val now = SystemClock.elapsedRealtime()
+        val cpu = Process.getElapsedCpuTime()
+        session = Session(label, now, cpu, Debug.getPss().toInt())
         DiagnosticLog.add("Diagnostics started: " + label)
         DiagnosticLog.add(deviceSnapshot(context))
         samplingJob = CoroutineScope(Dispatchers.Default).launch {
@@ -65,9 +69,17 @@ object DiagnosticsCollector {
 
     private fun sample(context: Context) {
         val active = synchronized(this) { session } ?: return
-        val elapsedMs = (SystemClock.elapsedRealtime() - active.startedAtMs).coerceAtLeast(1L)
-        val cpuPercent = (Process.getElapsedCpuTime() - active.startCpuMs).toDouble() / elapsedMs * 100.0
-        synchronized(this) { session?.samples?.add(Sample(cpuPercent, Debug.getPss().toInt())) }
+        val nowElapsed = SystemClock.elapsedRealtime()
+        val nowCpu = Process.getElapsedCpuTime()
+        val intervalMs = (nowElapsed - active.lastElapsedMs).coerceAtLeast(1L)
+        val cpuPercent = (nowCpu - active.lastCpuMs).toDouble() / intervalMs * 100.0
+        synchronized(this) {
+            session?.let {
+                it.lastElapsedMs = nowElapsed
+                it.lastCpuMs = nowCpu
+                it.samples.add(Sample(cpuPercent, Debug.getPss().toInt()))
+            }
+        }
     }
 
     private fun deviceSnapshot(context: Context): String {
