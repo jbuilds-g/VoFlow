@@ -5,6 +5,7 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
+import com.example.data.DiagnosticsCollector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -63,6 +64,7 @@ class AudioCaptureEngine(private val context: Context) {
             mediaRecorder = recorder
             isRecording = true
             recordingStartTimeMs = SystemClock.elapsedRealtime()
+            DiagnosticsCollector.start(context, "audio recording")
             Log.d(TAG, "Audio recording successfully started -> ${file.absolutePath}")
             Result.success(file)
         } catch (e: Exception) {
@@ -102,8 +104,10 @@ class AudioCaptureEngine(private val context: Context) {
             isRecording = false
             mediaRecorder = null
 
+            DiagnosticsCollector.stop()
             val file = outputFile
             if (file != null && file.exists() && file.length() > 0) {
+                DiagnosticsCollector.logAudioFile(file)
                 Log.d(TAG, "Recording completed. File: ${file.name}, Size: ${file.length()} bytes")
                 file
             } else {
