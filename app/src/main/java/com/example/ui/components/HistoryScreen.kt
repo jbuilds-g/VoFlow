@@ -128,7 +128,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold)
                 )
                 Text(
-                    "Your transcriptions and recordings from the last \${TranscriptionHistory.RETENTION_DAYS} days",
+                    "Your transcriptions and recordings from the last ${TranscriptionHistory.RETENTION_DAYS} days",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -248,7 +248,7 @@ private fun HistoryEntryCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        "\${formatDuration(entry.durationMs)} • \${formatBytes(entry.fileSizeBytes)} • \${entry.mode.replaceFirstChar { it.uppercase() }}",
+                        "${formatDuration(entry.durationMs)} • ${formatBytes(entry.fileSizeBytes)} • ${entry.mode.replaceFirstChar { it.uppercase() }}",
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onSurfaceVariant
                     )
@@ -297,8 +297,8 @@ private fun formatDuration(durationMs: Long): String {
 }
 
 private fun formatBytes(bytes: Long): String {
-    if (bytes < 1024L) return "\${bytes} B"
+    if (bytes < 1024L) return "${bytes} B"
     val kb = bytes / 1024L
-    if (kb < 1024L) return "\${kb} KB"
+    if (kb < 1024L) return "${kb} KB"
     return "%.1f MB".format(bytes / 1024f / 1024f)
 }
