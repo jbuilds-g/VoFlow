@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -33,11 +34,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -56,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.AboutScreen
+import com.example.ui.components.HistoryScreen
 import com.example.ui.components.ApiKeySection
 import com.example.ui.components.HeroStatusBar
 import com.example.ui.components.ModelSelectionSection
@@ -73,6 +78,7 @@ class MainActivity : ComponentActivity() {
                 val uiState by viewModel.uiState.collectAsState()
                 val snackbarHostState = remember { SnackbarHostState() }
                 var showAbout by remember { mutableStateOf(false) }
+                var selectedDestination by remember { mutableStateOf(AppDestination.SETTINGS) }
                 val audioPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                     viewModel.refreshPermissionStates()
                     if (!isGranted) Toast.makeText(this, "Microphone permission is required for dictation", Toast.LENGTH_SHORT).show()
@@ -80,7 +86,16 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(uiState.feedbackMessage) {
                     uiState.feedbackMessage?.let { msg -> snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Short); viewModel.clearFeedback() }
                 }
-                Scaffold(modifier = Modifier.fillMaxSize(), containerColor = MaterialTheme.colorScheme.background, snackbarHost = { SnackbarHost(snackbarHostState) }) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.background,
+                    snackbarHost = { SnackbarHost(snackbarHostState) },
+                    bottomBar = {
+                        if (!showAbout) {
+                            AppBottomNavigation(selectedDestination) { selectedDestination = it }
+                        }
+                    }
+                ) { innerPadding ->
                     if (showAbout) {
                         AboutScreen(
                             hasAudioPermission = uiState.hasAudioPermission,
@@ -92,6 +107,8 @@ class MainActivity : ComponentActivity() {
                             onBack = { showAbout = false },
                             modifier = Modifier.fillMaxSize().padding(innerPadding)
                         )
+                    } else if (selectedDestination == AppDestination.HISTORY) {
+                        HistoryScreen(modifier = Modifier.fillMaxSize().padding(innerPadding))
                     } else {
                         MainScreenContent(
                             uiState = uiState,
@@ -117,6 +134,47 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onResume() { super.onResume(); viewModel.refreshPermissionStates(); if (viewModel.uiState.value.hasValidApiKey) viewModel.loadAvailableModels() }
+}
+
+private enum class AppDestination(val label: String) {
+    SETTINGS("Settings"),
+    HISTORY("History")
+}
+
+@Composable
+private fun AppBottomNavigation(
+    selectedDestination: AppDestination,
+    onDestinationSelected: (AppDestination) -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).navigationBarsPadding(),
+        color = colorScheme.surfaceContainerHigh,
+        border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
+        tonalElevation = 3.dp,
+        shadowElevation = 10.dp,
+        shape = RoundedCornerShape(28.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            listOf(
+                AppDestination.SETTINGS to Icons.Rounded.Settings,
+                AppDestination.HISTORY to Icons.Rounded.History
+            ).forEach { (destination, icon) ->
+                val selected = selectedDestination == destination
+                androidx.compose.material3.NavigationBarItem(
+                    selected = selected,
+                    onClick = { onDestinationSelected(destination) },
+                    icon = { Icon(icon, contentDescription = destination.label) },
+                    label = { Text(destination.label) },
+                    alwaysShowLabel = selected,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
 }
 
 @Composable
