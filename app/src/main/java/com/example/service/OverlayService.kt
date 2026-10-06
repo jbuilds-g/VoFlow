@@ -81,6 +81,7 @@ import com.example.audio.AudioCaptureEngine
 import com.example.data.GeminiApiClient
 import com.example.data.QuotaCooldownController
 import com.example.data.SecurePreferences
+import com.example.data.TranscriptionHistory
 import com.example.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -349,10 +350,18 @@ class OverlayService : Service() {
                 return
             }
             Log.d(TAG, "Transcription succeeded: $text")
+            TranscriptionHistory.save(
+                context = this,
+                sourceAudioFile = file,
+                text = text,
+                durationMs = audioCaptureEngine.lastRecordingDurationMs,
+                model = geminiApiClient.resolveModel(selectedModel),
+                mode = mode
+            )
             val accessibilityService = AuraAccessibilityService.instance
             if (accessibilityService != null) accessibilityService.injectOrAppendTranscribedText(text)
             else { val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager; clipboard.setPrimaryClip(android.content.ClipData.newPlainText("AuraVoice", text)) }
-            file.delete(); retryFile = null; _canRetry.value = false; _overlayState.value = OverlayState.SUCCESS; delay(1200); _overlayState.value = OverlayState.IDLE; applyVisibilityRules()
+            retryFile = null; _canRetry.value = false; _overlayState.value = OverlayState.SUCCESS; delay(1200); _overlayState.value = OverlayState.IDLE; applyVisibilityRules()
         } else {
             val exception = result.exceptionOrNull(); val errorMsg = exception?.message ?: "Transcription failed"
             if (exception is GeminiApiClient.NoSpeechDetectedException) {
