@@ -23,6 +23,9 @@ class AudioCaptureEngine(private val context: Context) {
     var isRecording: Boolean = false
         private set
 
+    var lastRecordingDurationMs: Long = 0L
+        private set
+
     /**
      * Starts audio capture with 16kHz mono AAC/m4a encoding into app cache directory.
      * Uses unique timestamped files to prevent caching or concurrency issues.
@@ -102,6 +105,7 @@ class AudioCaptureEngine(private val context: Context) {
             isRecording = false
             mediaRecorder = null
 
+            lastRecordingDurationMs = elapsedMs.coerceAtLeast(600L)
             val file = outputFile
             if (file != null && file.exists() && file.length() > 0) {
                 Log.d(TAG, "Recording completed. File: ${file.name}, Size: ${file.length()} bytes")
