@@ -101,10 +101,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.background,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
-                    bottomBar = {
-                        AppBottomNavigation(selectedDestination) { selectedDestination = it }
-                    }
-                ) { innerPadding ->
+                    ) { innerPadding ->
                     if (selectedDestination == AppDestination.SETTINGS) {
                         AboutScreen(
                             hasAudioPermission = uiState.hasAudioPermission,
@@ -137,6 +134,11 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize().padding(innerPadding)
                         )
                     }
+                    AppBottomNavigation(
+                        selectedDestination = selectedDestination,
+                        onDestinationSelected = { selectedDestination = it },
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
                 }
             }
         }
@@ -154,11 +156,17 @@ private enum class AppDestination(val label: String) {
 @Composable
 private fun AppBottomNavigation(
     selectedDestination: AppDestination,
-    onDestinationSelected: (AppDestination) -> Unit
+    onDestinationSelected: (AppDestination) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
+
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).navigationBarsPadding(),
+        modifier = modifier
+            .navigationBarsPadding()
+            .padding(horizontal = 12.dp, vertical = 7.dp)
+            .widthIn(max = 420.dp)
+            .wrapContentWidth(),
         color = colorScheme.surfaceContainerHigh,
         border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
         tonalElevation = 3.dp,
@@ -166,35 +174,106 @@ private fun AppBottomNavigation(
         shape = RoundedCornerShape(28.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .wrapContentWidth()
+                .padding(horizontal = 4.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            listOf(
-                AppDestination.HOME to Icons.Rounded.Home,
-                AppDestination.HISTORY to Icons.Rounded.History,
-                AppDestination.SETTINGS to Icons.Rounded.Settings
-            ).forEach { (destination, icon) ->
-                val selected = selectedDestination == destination
-                Surface(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(CircleShape)
-                        .clickable { onDestinationSelected(destination) },
-                    color = if (selected) colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent,
-                    contentColor = if (selected) colorScheme.onSecondaryContainer else colorScheme.onSurfaceVariant,
-                    shape = CircleShape
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(icon, contentDescription = destination.label, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(6.dp))
-                        if (selected) {
-                            Text(destination.label, style = MaterialTheme.typography.labelLarge)
-                        }
-                    }
+            AppDestination.entries.forEach { destination ->
+                ExpressivePillNavItem(
+                    destination = destination,
+                    selected = selectedDestination == destination,
+                    onClick = { onDestinationSelected(destination) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpressivePillNavItem(
+    destination: AppDestination,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val containerColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "navContainerColor"
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "navContentColor"
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.96f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "navScale"
+    )
+
+    Surface(
+        modifier = Modifier
+            .height(44.dp)
+            .wrapContentWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        color = containerColor,
+        contentColor = contentColor,
+        shape = CircleShape
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = if (selected) 16.dp else 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = when (destination) {
+                    AppDestination.HOME -> if (selected) Icons.Filled.Home else Icons.Outlined.Home
+                    AppDestination.HISTORY -> if (selected) Icons.Filled.History else Icons.Outlined.History
+                    AppDestination.SETTINGS -> if (selected) Icons.Filled.Settings else Icons.Outlined.Settings
+                },
+                contentDescription = destination.label,
+                modifier = Modifier.size(20.dp)
+            )
+            AnimatedVisibility(
+                visible = selected,
+                enter = expandHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(),
+                exit = shrinkHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeOut()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = destination.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1
+                    )
                 }
             }
         }
