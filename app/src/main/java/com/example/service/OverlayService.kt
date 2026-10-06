@@ -350,7 +350,7 @@ class OverlayService : Service() {
                 return
             }
             Log.d(TAG, "Transcription succeeded: $text")
-            TranscriptionHistory.save(
+            val historyEntry = TranscriptionHistory.save(
                 context = this,
                 sourceAudioFile = file,
                 text = text,
@@ -358,6 +358,7 @@ class OverlayService : Service() {
                 model = geminiApiClient.resolveModel(selectedModel),
                 mode = mode
             )
+            if (historyEntry == null) file.delete()
             val accessibilityService = AuraAccessibilityService.instance
             if (accessibilityService != null) accessibilityService.injectOrAppendTranscribedText(text)
             else { val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager; clipboard.setPrimaryClip(android.content.ClipData.newPlainText("AuraVoice", text)) }
