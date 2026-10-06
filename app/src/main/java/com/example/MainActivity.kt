@@ -100,45 +100,56 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = MaterialTheme.colorScheme.background,
-                    snackbarHost = { SnackbarHost(snackbarHostState) },
-                    ) { innerPadding ->
-                    if (selectedDestination == AppDestination.SETTINGS) {
-                        AboutScreen(
-                            hasAudioPermission = uiState.hasAudioPermission,
-                            hasOverlayPermission = uiState.hasOverlayPermission,
-                            hasAccessibilityPermission = uiState.hasAccessibilityPermission,
-                            onRequestAudioPermission = { audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) },
-                            onRequestOverlayPermission = { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) },
-                            onRequestAccessibilityPermission = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
-                            onBack = { selectedDestination = AppDestination.HOME },
-                            modifier = Modifier.fillMaxSize().padding(innerPadding)
-                        )
-                    } else if (selectedDestination == AppDestination.HISTORY) {
-                        HistoryScreen(modifier = Modifier.fillMaxSize().padding(innerPadding))
-                    } else {
-                        MainScreenContent(
-                            uiState = uiState,
-                            onToggleOverlay = { viewModel.toggleOverlayService(it) },
-                            onApiKeyChange = { viewModel.updateApiKey(it) },
-                            onValidateApiKey = { viewModel.validateAndSaveApiKey() },
-                            onModeSelect = { viewModel.setTranscriptionMode(it) },
-                            onModelSelect = { viewModel.setSelectedModel(it) },
-                            onRefreshModels = { viewModel.loadAvailableModels(true) },
-                            onStartSandboxRecording = { if (!uiState.hasAudioPermission) audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) else viewModel.startSandboxRecording() },
-                            onStopSandboxRecording = { viewModel.stopSandboxRecording() },
-                            onSandboxTextChange = { viewModel.updateSandboxText(it) },
-                            onClearSandboxText = { viewModel.clearSandboxText() },
-                            onCopySandboxText = { viewModel.copySandboxText() },
-                            onDismissSandboxError = { viewModel.clearErrorMessage() },
-                            onOpenAbout = { selectedDestination = AppDestination.SETTINGS },
-                            modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    snackbarHost = { SnackbarHost(snackbarHostState) }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(bottom = 76.dp)
+                        ) {
+                            when (selectedDestination) {
+                                AppDestination.SETTINGS -> AboutScreen(
+                                    hasAudioPermission = uiState.hasAudioPermission,
+                                    hasOverlayPermission = uiState.hasOverlayPermission,
+                                    hasAccessibilityPermission = uiState.hasAccessibilityPermission,
+                                    onRequestAudioPermission = { audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) },
+                                    onRequestOverlayPermission = { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) },
+                                    onRequestAccessibilityPermission = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
+                                    onBack = { selectedDestination = AppDestination.HOME },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                AppDestination.HISTORY -> HistoryScreen(modifier = Modifier.fillMaxSize())
+                                AppDestination.HOME -> MainScreenContent(
+                                    uiState = uiState,
+                                    onToggleOverlay = { viewModel.toggleOverlayService(it) },
+                                    onApiKeyChange = { viewModel.updateApiKey(it) },
+                                    onValidateApiKey = { viewModel.validateAndSaveApiKey() },
+                                    onModeSelect = { viewModel.setTranscriptionMode(it) },
+                                    onModelSelect = { viewModel.setSelectedModel(it) },
+                                    onRefreshModels = { viewModel.loadAvailableModels(true) },
+                                    onStartSandboxRecording = { if (!uiState.hasAudioPermission) audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) else viewModel.startSandboxRecording() },
+                                    onStopSandboxRecording = { viewModel.stopSandboxRecording() },
+                                    onSandboxTextChange = { viewModel.updateSandboxText(it) },
+                                    onClearSandboxText = { viewModel.clearSandboxText() },
+                                    onCopySandboxText = { viewModel.copySandboxText() },
+                                    onDismissSandboxError = { viewModel.clearErrorMessage() },
+                                    onOpenAbout = { selectedDestination = AppDestination.SETTINGS },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+
+                        AppBottomNavigation(
+                            selectedDestination = selectedDestination,
+                            onDestinationSelected = { selectedDestination = it },
+                            modifier = Modifier.align(Alignment.BottomCenter)
                         )
                     }
-                    AppBottomNavigation(
-                        selectedDestination = selectedDestination,
-                        onDestinationSelected = { selectedDestination = it },
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                    )
                 }
             }
         }
