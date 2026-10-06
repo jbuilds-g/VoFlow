@@ -38,6 +38,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -80,8 +81,7 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 val uiState by viewModel.uiState.collectAsState()
                 val snackbarHostState = remember { SnackbarHostState() }
-                var showAbout by remember { mutableStateOf(false) }
-                var selectedDestination by remember { mutableStateOf(AppDestination.SETTINGS) }
+                var selectedDestination by remember { mutableStateOf(AppDestination.HOME) }
                 val audioPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                     viewModel.refreshPermissionStates()
                     if (!isGranted) Toast.makeText(this, "Microphone permission is required for dictation", Toast.LENGTH_SHORT).show()
@@ -94,12 +94,10 @@ class MainActivity : ComponentActivity() {
                     containerColor = MaterialTheme.colorScheme.background,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
-                        if (!showAbout) {
-                            AppBottomNavigation(selectedDestination) { selectedDestination = it }
-                        }
+                        AppBottomNavigation(selectedDestination) { selectedDestination = it }
                     }
                 ) { innerPadding ->
-                    if (showAbout) {
+                    if (selectedDestination == AppDestination.SETTINGS) {
                         AboutScreen(
                             hasAudioPermission = uiState.hasAudioPermission,
                             hasOverlayPermission = uiState.hasOverlayPermission,
@@ -107,7 +105,7 @@ class MainActivity : ComponentActivity() {
                             onRequestAudioPermission = { audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) },
                             onRequestOverlayPermission = { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) },
                             onRequestAccessibilityPermission = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
-                            onBack = { showAbout = false },
+                            onBack = { selectedDestination = AppDestination.HOME },
                             modifier = Modifier.fillMaxSize().padding(innerPadding)
                         )
                     } else if (selectedDestination == AppDestination.HISTORY) {
@@ -127,7 +125,7 @@ class MainActivity : ComponentActivity() {
                             onClearSandboxText = { viewModel.clearSandboxText() },
                             onCopySandboxText = { viewModel.copySandboxText() },
                             onDismissSandboxError = { viewModel.clearErrorMessage() },
-                            onOpenAbout = { showAbout = true },
+                            onOpenAbout = { selectedDestination = AppDestination.SETTINGS },
                             modifier = Modifier.fillMaxSize().padding(innerPadding)
                         )
                     }
@@ -140,8 +138,9 @@ class MainActivity : ComponentActivity() {
 }
 
 private enum class AppDestination(val label: String) {
-    SETTINGS("Settings"),
-    HISTORY("History")
+    HOME("Home"),
+    HISTORY("History"),
+    SETTINGS("Settings")
 }
 
 @Composable
@@ -163,8 +162,9 @@ private fun AppBottomNavigation(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             listOf(
-                AppDestination.SETTINGS to Icons.Rounded.Settings,
-                AppDestination.HISTORY to Icons.Rounded.History
+                AppDestination.HOME to Icons.Rounded.Home,
+                AppDestination.HISTORY to Icons.Rounded.History,
+                AppDestination.SETTINGS to Icons.Rounded.Settings
             ).forEach { (destination, icon) ->
                 val selected = selectedDestination == destination
                 Surface(
