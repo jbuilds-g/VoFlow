@@ -84,6 +84,12 @@ object TranscriptionHistory {
         return readEntries().sortedByDescending { it.timestampMs }
     }
 
+    fun getAudioFile(context: Context, entry: TranscriptionHistoryEntry): File? {
+        initializeIfNeeded(context)
+        val file = File(requireNotNull(historyDirectory), entry.audioFileName)
+        return file.takeIf { it.exists() && it.isFile }
+    }
+
     @Synchronized
     fun delete(context: Context, id: String): Boolean {
         initializeIfNeeded(context)
