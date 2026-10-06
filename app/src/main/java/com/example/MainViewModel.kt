@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.audio.AudioCaptureEngine
 import com.example.data.GeminiApiClient
 import com.example.data.SecurePreferences
+import com.example.data.TranscriptionHistory
 import com.example.service.AuraAccessibilityService
 import com.example.service.OverlayService
 import kotlinx.coroutines.Job
@@ -149,11 +150,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (file == null || file.length() == 0L) { _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = "No audio was captured (0 bytes). Check microphone permission or speak louder.", feedbackMessage = "No audio recorded.") }; return }
         _uiState.update { it.copy(lastAudioInfo = "Recorded ${file.length() / 1024}KB (${_uiState.value.sandboxRecordingSeconds}s)") }
         viewModelScope.launch {
-            val result = geminiApiClient.transcribeAudio(apiKey = securePreferences.getApiKey(), audioFile = file, mode = _uiState.value.transcriptionMode, selectedModel = _uiState.value.selectedModel)
-            try { file.delete() } catch (_: Exception) { }
+            val mode = _uiState.value.transcriptionMode
+            val selectedModel = _uiState.value.selectedModel
+            val result = geminiApiClient.transcribeAudio(apiKey = securePreferences.getApiKey(), audioFile = file, mode = mode, selectedModel = selectedModel)
             if (result.isSuccess) {
                 val newText = (result.getOrNull() ?: "").trim()
                 if (newText.isBlank()) { _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = "No speech detected in audio. Please speak louder and closer to the microphone.", feedbackMessage = "No speech detected in audio.") }; return@launch }
+                TranscriptionHistory.save(
+                    context = getApplication(),
+                    sourceAudioFile = file,
+                    text = newText,
+                    durationMs = audioCaptureEngine.lastRecordingDurationMs,
+                    model = geminiApiClient.resolveModel(selectedModel),
+                    mode = mode
+                )
                 _uiState.update { current ->
                     val currentText = current.sandboxTranscribedText
                     val combined = if (currentText.isNotBlank()) { if (currentText.endsWith(" ") || currentText.endsWith("\n")) "$currentText$newText" else "$currentText $newText" } else newText
