@@ -156,7 +156,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (result.isSuccess) {
                 val newText = (result.getOrNull() ?: "").trim()
                 if (newText.isBlank()) { _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = "No speech detected in audio. Please speak louder and closer to the microphone.", feedbackMessage = "No speech detected in audio.") }; return@launch }
-                TranscriptionHistory.save(
+                val historyEntry = TranscriptionHistory.save(
                     context = getApplication(),
                     sourceAudioFile = file,
                     text = newText,
@@ -164,12 +164,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     model = geminiApiClient.resolveModel(selectedModel),
                     mode = mode
                 )
+                if (historyEntry == null) file.delete()
                 _uiState.update { current ->
                     val currentText = current.sandboxTranscribedText
                     val combined = if (currentText.isNotBlank()) { if (currentText.endsWith(" ") || currentText.endsWith("\n")) "$currentText$newText" else "$currentText $newText" } else newText
                     current.copy(isSandboxProcessing = false, sandboxTranscribedText = combined, lastErrorMessage = null, feedbackMessage = "Dictated ${newText.split(" ").size} words successfully!")
                 }
             } else {
+                file.delete()
                 val err = result.exceptionOrNull()?.message ?: "Transcription error"
                 _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = err, feedbackMessage = "Dictation error: $err") }
             }
