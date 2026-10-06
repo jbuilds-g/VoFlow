@@ -4,8 +4,6 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.UUID
 import kotlin.math.max
 
@@ -175,18 +173,9 @@ object TranscriptionHistory {
         }
 
         tempFile.writeText(array.toString())
-        try {
-            Files.move(
-                tempFile.toPath(),
-                indexFile().toPath(),
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE
-            )
-        } catch (_: Exception) {
-            if (!tempFile.renameTo(indexFile())) {
-                tempFile.delete()
-                throw IllegalStateException("Could not update transcription history index.")
-            }
+        if (!tempFile.renameTo(indexFile())) {
+            tempFile.delete()
+            throw IllegalStateException("Could not update transcription history index.")
         }
     }
 
