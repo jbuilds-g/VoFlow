@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import com.example.data.TranscriptionHistory
 
 class FlowApplication : Application() {
 
@@ -18,6 +19,7 @@ class FlowApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        TranscriptionHistory.initialize(this)
         createNotificationChannels()
     }
 
