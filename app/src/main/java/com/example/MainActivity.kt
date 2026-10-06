@@ -29,8 +29,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Key
@@ -164,14 +166,27 @@ private fun AppBottomNavigation(
                 AppDestination.HISTORY to Icons.Rounded.History
             ).forEach { (destination, icon) ->
                 val selected = selectedDestination == destination
-                androidx.compose.material3.NavigationBarItem(
-                    selected = selected,
-                    onClick = { onDestinationSelected(destination) },
-                    icon = { Icon(icon, contentDescription = destination.label) },
-                    label = { Text(destination.label) },
-                    alwaysShowLabel = selected,
-                    modifier = Modifier.weight(1f)
-                )
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(CircleShape)
+                        .clickable { onDestinationSelected(destination) },
+                    color = if (selected) colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent,
+                    contentColor = if (selected) colorScheme.onSecondaryContainer else colorScheme.onSurfaceVariant,
+                    shape = CircleShape
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(icon, contentDescription = destination.label, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(6.dp))
+                        if (selected) {
+                            Text(destination.label, style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
             }
         }
     }
