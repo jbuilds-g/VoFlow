@@ -137,6 +137,9 @@ class MainActivity : ComponentActivity() {
                                     onValidateApiKey = { viewModel.validateAndSaveApiKey() },
                                     onModeSelect = { viewModel.setTranscriptionMode(it) },
                                     onModelSelect = { viewModel.setSelectedModel(it) },
+                                    useExperimentalOpus = uiState.useExperimentalOpus,
+                                    isOpusSupported = uiState.isOpusSupported,
+                                    onExperimentalOpusChange = { viewModel.setExperimentalOpusEnabled(it) },
                                     onRefreshModels = { viewModel.loadAvailableModels(true) },
                                     onStartSandboxRecording = { if (!uiState.hasAudioPermission) audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) else viewModel.startSandboxRecording() },
                                     onStopSandboxRecording = { viewModel.stopSandboxRecording() },
@@ -305,6 +308,9 @@ fun MainScreenContent(
     onValidateApiKey: () -> Unit,
     onModeSelect: (String) -> Unit,
     onModelSelect: (String) -> Unit,
+    useExperimentalOpus: Boolean,
+    isOpusSupported: Boolean,
+    onExperimentalOpusChange: (Boolean) -> Unit,
     onRefreshModels: () -> Unit,
     onStartSandboxRecording: () -> Unit,
     onStopSandboxRecording: () -> Unit,
@@ -323,7 +329,10 @@ fun MainScreenContent(
             HeroStatusBar(isOverlayRunning = uiState.isOverlayServiceRunning, allPermissionsGranted = allPermissionsGranted, onToggleOverlay = onToggleOverlay, onOpenAbout = onOpenAbout)
             ApiKeySection(apiKey = uiState.apiKey, onApiKeyChange = onApiKeyChange, isValidating = uiState.isValidatingApiKey, validationResult = uiState.apiKeyValidationResult, isValidationSuccess = uiState.isApiKeyValid, onValidateKey = onValidateApiKey)
             ModelSelectionSection(selectedModel = uiState.selectedModel, models = uiState.availableModels, onModelSelect = onModelSelect, modifier = Modifier.fillMaxWidth())
-            VoiceSandboxSection(isRecording = uiState.isSandboxRecording, isProcessing = uiState.isSandboxProcessing, recordingTimeSeconds = uiState.sandboxRecordingSeconds, transcribedText = uiState.sandboxTranscribedText, onTranscribedTextChange = onSandboxTextChange, selectedMode = uiState.transcriptionMode, onModeSelect = onModeSelect, onStartRecording = onStartSandboxRecording, onStopRecording = onStopSandboxRecording, onClearText = onClearSandboxText, onCopyText = onCopySandboxText, lastErrorMessage = uiState.lastErrorMessage, lastAudioInfo = uiState.lastAudioInfo, onDismissError = onDismissSandboxError)
+            VoiceSandboxSection(
+                useExperimentalOpus = useExperimentalOpus,
+                isOpusSupported = isOpusSupported,
+                onExperimentalOpusChange = onExperimentalOpusChange,isRecording = uiState.isSandboxRecording, isProcessing = uiState.isSandboxProcessing, recordingTimeSeconds = uiState.sandboxRecordingSeconds, transcribedText = uiState.sandboxTranscribedText, onTranscribedTextChange = onSandboxTextChange, selectedMode = uiState.transcriptionMode, onModeSelect = onModeSelect, onStartRecording = onStartSandboxRecording, onStopRecording = onStopSandboxRecording, onClearText = onClearSandboxText, onCopyText = onCopySandboxText, lastErrorMessage = uiState.lastErrorMessage, lastAudioInfo = uiState.lastAudioInfo, onDismissError = onDismissSandboxError)
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
