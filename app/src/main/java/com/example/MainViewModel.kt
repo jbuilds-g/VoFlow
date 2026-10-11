@@ -37,6 +37,8 @@ data class MainUiState(
     val isApiKeyValid: Boolean? = null,
     val transcriptionMode: String = "smart",
     val selectedModel: String = "auto",
+    val useExperimentalOpus: Boolean = false,
+    val isOpusSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
     val availableModels: List<String> = emptyList(),
     val isLoadingModels: Boolean = false,
     val isSandboxRecording: Boolean = false,
@@ -57,7 +59,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             apiKey = securePreferences.getApiKey(),
             hasValidApiKey = securePreferences.hasValidApiKey(),
             transcriptionMode = securePreferences.getTranscriptionMode(),
-            selectedModel = securePreferences.getSelectedModel()
+            selectedModel = securePreferences.getSelectedModel(),
+            useExperimentalOpus = securePreferences.isExperimentalOpusEnabled()
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -121,6 +124,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setTranscriptionMode(mode: String) { securePreferences.setTranscriptionMode(mode); _uiState.update { it.copy(transcriptionMode = mode) } }
+
+    fun setExperimentalOpusEnabled(enabled: Boolean) {
+        val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val value = enabled && supported
+        securePreferences.setExperimentalOpusEnabled(value)
+        _uiState.update { it.copy(useExperimentalOpus = value, isOpusSupported = supported) }
+    }
 
     fun toggleOverlayService(enable: Boolean) {
         val context = getApplication<Application>()
