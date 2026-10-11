@@ -50,6 +50,9 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun VoiceSandboxSection(
+    useExperimentalOpus: Boolean,
+    isOpusSupported: Boolean,
+    onExperimentalOpusChange: (Boolean) -> Unit,
     isRecording: Boolean,
     isProcessing: Boolean,
     recordingTimeSeconds: Int,
@@ -193,6 +196,39 @@ fun VoiceSandboxSection(
                         selectedContainerColor = colorScheme.primaryContainer,
                         selectedLabelColor = colorScheme.onPrimaryContainer
                     )
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Recording format",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = colorScheme.onSurface
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = !useExperimentalOpus,
+                        onClick = { onExperimentalOpusChange(false) },
+                        enabled = !isRecording && !isProcessing,
+                        label = { Text("AAC (Recommended)") },
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    FilterChip(
+                        selected = useExperimentalOpus,
+                        onClick = { if (isOpusSupported) onExperimentalOpusChange(true) },
+                        enabled = isOpusSupported && !isRecording && !isProcessing,
+                        label = { Text("Opus (Experimental)") },
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
+                Text(
+                    text = when {
+                        !isOpusSupported -> "Opus requires Android 10 or newer. AAC is active on this device."
+                        useExperimentalOpus -> "Experimental: records Opus in an Ogg file. If the device recorder cannot start Opus, VoFlow falls back to AAC."
+                        else -> "AAC is the default format. Opus is an experimental option for Android 10 and newer."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant
                 )
             }
 
