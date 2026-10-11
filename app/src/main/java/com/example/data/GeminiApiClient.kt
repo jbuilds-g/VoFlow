@@ -63,7 +63,7 @@ class GeminiApiClient {
             val model = resolveModel(selectedModel)
             DiagnosticLog.add("Using Gemini model: $model")
             val base64Audio = Base64.encodeToString(audioFile.readBytes(), Base64.NO_WRAP)
-            val result = executeAudioRequest(model, apiKey, base64Audio, mode)
+            val result = executeAudioRequest(model, apiKey, base64Audio, mode, audioMimeType(audioFile))
 
             if (result.isSuccess && result.getOrNull()?.trim().orEmpty().isNotBlank()) {
                 return@withContext Result.success(result.getOrNull()!!.trim())
@@ -97,11 +97,15 @@ class GeminiApiClient {
         }
     }
 
+    private fun audioMimeType(file: File): String =
+        if (file.extension.equals("ogg", ignoreCase = true)) "audio/ogg" else "audio/mp4"
+
     private fun executeAudioRequest(
         model: String,
         apiKey: String,
         base64Audio: String,
-        mode: String
+        mode: String,
+        mimeType: String
     ): Result<String> {
         return try {
             val isTranscribeModel = model == "gemini-3.5-transcribe"
@@ -142,7 +146,7 @@ class GeminiApiClient {
 
             val audioPart = JSONObject().apply {
                 put("inline_data", JSONObject().apply {
-                    put("mime_type", "audio/mp4")
+                    put("mime_type", mimeType)
                     put("data", base64Audio)
                 })
             }
