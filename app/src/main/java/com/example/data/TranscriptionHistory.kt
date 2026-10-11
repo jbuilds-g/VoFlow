@@ -52,7 +52,8 @@ object TranscriptionHistory {
         cleanupExpired(timestampMs)
 
         val id = UUID.randomUUID().toString()
-        val audioFileName = "$id.m4a"
+        val extension = sourceAudioFile.extension.lowercase().takeIf { it == "ogg" } ?: "m4a"
+        val audioFileName = "$id.$extension"
         val destination = File(directory, audioFileName)
         val entry = TranscriptionHistoryEntry(
             id = id,
@@ -124,7 +125,7 @@ object TranscriptionHistory {
 
         val referencedAudio = retained.mapTo(HashSet()) { it.audioFileName }
         directory.listFiles()
-            ?.filter { it.isFile && it.name.endsWith(".m4a", ignoreCase = true) && it.name !in referencedAudio }
+            ?.filter { it.isFile && (it.name.endsWith(".m4a", ignoreCase = true) || it.name.endsWith(".ogg", ignoreCase = true)) && it.name !in referencedAudio }
             ?.forEach { it.delete() }
 
         if (retained.size != entries.size) {
@@ -187,7 +188,9 @@ object TranscriptionHistory {
 
     private fun JSONObject.toEntry(): TranscriptionHistoryEntry? {
         val id = optString("id").takeIf { it.isNotBlank() } ?: return null
-        val audioFileName = optString("audioFileName").takeIf { it.endsWith(".m4a", ignoreCase = true) } ?: return null
+        val audioFileName = optString("audioFileName").takeIf {
+            it.endsWith(".m4a", ignoreCase = true) || it.endsWith(".ogg", ignoreCase = true)
+        } ?: return null
         val text = optString("text").takeIf { it.isNotBlank() } ?: return null
         return TranscriptionHistoryEntry(
             id = id,
