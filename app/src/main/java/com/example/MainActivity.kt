@@ -152,6 +152,7 @@ class MainActivity : ComponentActivity() {
                                     onCopySandboxText = { viewModel.copySandboxText() },
                                     onDismissSandboxError = { viewModel.clearErrorMessage() },
                                     onOpenSettings = { selectedDestination = AppDestination.SETTINGS },
+                                    onOpenHistory = { selectedDestination = AppDestination.HISTORY },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
