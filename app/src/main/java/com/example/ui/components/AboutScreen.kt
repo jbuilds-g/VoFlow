@@ -75,7 +75,21 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 @Composable
-fun AboutScreen(
+fun SettingsScreen(
+    apiKey: String,
+    onApiKeyChange: (String) -> Unit,
+    isValidatingApiKey: Boolean,
+    apiKeyValidationResult: String?,
+    isApiKeyValid: Boolean?,
+    onValidateApiKey: () -> Unit,
+    selectedModel: String,
+    availableModels: List<String>,
+    onModelSelect: (String) -> Unit,
+    transcriptionMode: String,
+    onModeSelect: (String) -> Unit,
+    useExperimentalOpus: Boolean,
+    isOpusSupported: Boolean,
+    onExperimentalOpusChange: (Boolean) -> Unit,
     hasAudioPermission: Boolean,
     hasOverlayPermission: Boolean,
     hasAccessibilityPermission: Boolean,
@@ -116,10 +130,42 @@ fun AboutScreen(
                 Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text("About VoFlow", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
-                Text("How it works, permissions, and diagnostics", style = MaterialTheme.typography.bodySmall, color = colorScheme.onSurfaceVariant)
+                Text("Settings", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
+                Text("API, dictation, permissions, and app information", style = MaterialTheme.typography.bodySmall, color = colorScheme.onSurfaceVariant)
             }
         }
+
+        ApiKeySection(
+            apiKey = apiKey,
+            onApiKeyChange = onApiKeyChange,
+            isValidating = isValidatingApiKey,
+            validationResult = apiKeyValidationResult,
+            isValidationSuccess = isApiKeyValid,
+            onValidateKey = onValidateApiKey,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        ModelSelectionSection(
+            selectedModel = selectedModel,
+            models = availableModels,
+            onModelSelect = onModelSelect,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        DictationPreferencesSection(
+            transcriptionMode = transcriptionMode,
+            onModeSelect = onModeSelect,
+            useExperimentalOpus = useExperimentalOpus,
+            isOpusSupported = isOpusSupported,
+            onExperimentalOpusChange = onExperimentalOpusChange,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Text(
+            "App information",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
 
         Card(
             modifier = Modifier.fillMaxWidth(),
