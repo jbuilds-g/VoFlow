@@ -68,6 +68,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.DiagnosticLog
+import com.example.ui.components.ApiKeySection
+import com.example.ui.components.ModelSelectionSection
+import com.example.ui.components.DictationPreferencesSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
