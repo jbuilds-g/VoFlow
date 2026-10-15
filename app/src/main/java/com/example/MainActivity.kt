@@ -79,8 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.SettingsScreen
 import com.example.ui.components.HistoryScreen
-import com.example.ui.components.HeroStatusBar
-import com.example.ui.components.VoiceSandboxSection
+import com.example.ui.components.DashboardScreen
 import com.example.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
@@ -143,7 +142,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 AppDestination.HISTORY -> HistoryScreen(modifier = Modifier.fillMaxSize())
-                                AppDestination.HOME -> MainScreenContent(
+                                AppDestination.HOME -> DashboardScreen(
                                     uiState = uiState,
                                     onToggleOverlay = { viewModel.toggleOverlayService(it) },
                                     onStartSandboxRecording = { if (!uiState.hasAudioPermission) audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) else viewModel.startSandboxRecording() },
@@ -152,7 +151,7 @@ class MainActivity : ComponentActivity() {
                                     onClearSandboxText = { viewModel.clearSandboxText() },
                                     onCopySandboxText = { viewModel.copySandboxText() },
                                     onDismissSandboxError = { viewModel.clearErrorMessage() },
-                                    onOpenAbout = { selectedDestination = AppDestination.SETTINGS },
+                                    onOpenSettings = { selectedDestination = AppDestination.SETTINGS },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
@@ -300,63 +299,6 @@ private fun ExpressivePillNavItem(
                         maxLines = 1
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun MainScreenContent(
-    uiState: MainUiState,
-    onToggleOverlay: (Boolean) -> Unit,
-    onStartSandboxRecording: () -> Unit,
-    onStopSandboxRecording: () -> Unit,
-    onSandboxTextChange: (String) -> Unit,
-    onClearSandboxText: () -> Unit,
-    onCopySandboxText: () -> Unit,
-    onDismissSandboxError: () -> Unit,
-    onOpenAbout: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scrollState = rememberScrollState()
-    val allPermissionsGranted = uiState.hasAudioPermission && uiState.hasOverlayPermission && uiState.hasAccessibilityPermission
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp).verticalScroll(scrollState).padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            AnimatedVisibility(visible = !uiState.hasValidApiKey, enter = fadeIn(), exit = fadeOut()) {
-                MissingApiKeyPromptCard(modifier = Modifier.clickable(onClick = onOpenAbout))
-            }
-            HeroStatusBar(isOverlayRunning = uiState.isOverlayServiceRunning, allPermissionsGranted = allPermissionsGranted, onToggleOverlay = onToggleOverlay, onOpenAbout = onOpenAbout)
-            VoiceSandboxSection(
-                isRecording = uiState.isSandboxRecording,
-                isProcessing = uiState.isSandboxProcessing,
-                recordingTimeSeconds = uiState.sandboxRecordingSeconds,
-                transcribedText = uiState.sandboxTranscribedText,
-                onTranscribedTextChange = onSandboxTextChange,
-                onStartRecording = onStartSandboxRecording,
-                onStopRecording = onStopSandboxRecording,
-                onClearText = onClearSandboxText,
-                onCopyText = onCopySandboxText,
-                lastErrorMessage = uiState.lastErrorMessage,
-                lastAudioInfo = uiState.lastAudioInfo,
-                onDismissError = onDismissSandboxError
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-fun MissingApiKeyPromptCard(modifier: Modifier = Modifier) {
-    val colorScheme = MaterialTheme.colorScheme
-    Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = colorScheme.errorContainer), border = androidx.compose.foundation.BorderStroke(1.5.dp, colorScheme.error.copy(alpha = 0.6f))) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(modifier = Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(colorScheme.error.copy(alpha = 0.15f)).border(1.dp, colorScheme.error.copy(alpha = 0.4f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                Icon(imageVector = Icons.Rounded.Key, contentDescription = null, tint = colorScheme.error, modifier = Modifier.size(22.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Gemini API Key Required", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = colorScheme.onErrorContainer)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(text = "VoFlow requires a Google AI Studio API key to transcribe speech. Open Settings to add and validate your key.", style = MaterialTheme.typography.bodySmall.copy(color = colorScheme.onErrorContainer.copy(alpha = 0.9f), lineHeight = 16.sp))
             }
         }
     }
