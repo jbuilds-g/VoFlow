@@ -131,6 +131,7 @@ class MainActivity : ComponentActivity() {
                                     onModeSelect = { viewModel.setTranscriptionMode(it) },
                                     useExperimentalOpus = uiState.useExperimentalOpus,
                                     isOpusSupported = uiState.isOpusSupported,
+                                    isDictationBusy = uiState.isSandboxRecording || uiState.isSandboxProcessing,
                                     onExperimentalOpusChange = { viewModel.setExperimentalOpusEnabled(it) },
                                     hasAudioPermission = uiState.hasAudioPermission,
                                     hasOverlayPermission = uiState.hasOverlayPermission,
