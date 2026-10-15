@@ -77,11 +77,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.components.AboutScreen
+import com.example.ui.components.SettingsScreen
 import com.example.ui.components.HistoryScreen
-import com.example.ui.components.ApiKeySection
 import com.example.ui.components.HeroStatusBar
-import com.example.ui.components.ModelSelectionSection
 import com.example.ui.components.VoiceSandboxSection
 import com.example.ui.theme.MyApplicationTheme
 
@@ -119,7 +117,21 @@ class MainActivity : ComponentActivity() {
                                 .padding(bottom = 76.dp)
                         ) {
                             when (selectedDestination) {
-                                AppDestination.SETTINGS -> AboutScreen(
+                                AppDestination.SETTINGS -> SettingsScreen(
+                                    apiKey = uiState.apiKey,
+                                    onApiKeyChange = { viewModel.updateApiKey(it) },
+                                    isValidatingApiKey = uiState.isValidatingApiKey,
+                                    apiKeyValidationResult = uiState.apiKeyValidationResult,
+                                    isApiKeyValid = uiState.isApiKeyValid,
+                                    onValidateApiKey = { viewModel.validateAndSaveApiKey() },
+                                    selectedModel = uiState.selectedModel,
+                                    availableModels = uiState.availableModels,
+                                    onModelSelect = { viewModel.setSelectedModel(it) },
+                                    transcriptionMode = uiState.transcriptionMode,
+                                    onModeSelect = { viewModel.setTranscriptionMode(it) },
+                                    useExperimentalOpus = uiState.useExperimentalOpus,
+                                    isOpusSupported = uiState.isOpusSupported,
+                                    onExperimentalOpusChange = { viewModel.setExperimentalOpusEnabled(it) },
                                     hasAudioPermission = uiState.hasAudioPermission,
                                     hasOverlayPermission = uiState.hasOverlayPermission,
                                     hasAccessibilityPermission = uiState.hasAccessibilityPermission,
@@ -133,14 +145,6 @@ class MainActivity : ComponentActivity() {
                                 AppDestination.HOME -> MainScreenContent(
                                     uiState = uiState,
                                     onToggleOverlay = { viewModel.toggleOverlayService(it) },
-                                    onApiKeyChange = { viewModel.updateApiKey(it) },
-                                    onValidateApiKey = { viewModel.validateAndSaveApiKey() },
-                                    onModeSelect = { viewModel.setTranscriptionMode(it) },
-                                    onModelSelect = { viewModel.setSelectedModel(it) },
-                                    useExperimentalOpus = uiState.useExperimentalOpus,
-                                    isOpusSupported = uiState.isOpusSupported,
-                                    onExperimentalOpusChange = { viewModel.setExperimentalOpusEnabled(it) },
-                                    onRefreshModels = { viewModel.loadAvailableModels(true) },
                                     onStartSandboxRecording = { if (!uiState.hasAudioPermission) audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) else viewModel.startSandboxRecording() },
                                     onStopSandboxRecording = { viewModel.stopSandboxRecording() },
                                     onSandboxTextChange = { viewModel.updateSandboxText(it) },
@@ -304,14 +308,6 @@ private fun ExpressivePillNavItem(
 fun MainScreenContent(
     uiState: MainUiState,
     onToggleOverlay: (Boolean) -> Unit,
-    onApiKeyChange: (String) -> Unit,
-    onValidateApiKey: () -> Unit,
-    onModeSelect: (String) -> Unit,
-    onModelSelect: (String) -> Unit,
-    useExperimentalOpus: Boolean,
-    isOpusSupported: Boolean,
-    onExperimentalOpusChange: (Boolean) -> Unit,
-    onRefreshModels: () -> Unit,
     onStartSandboxRecording: () -> Unit,
     onStopSandboxRecording: () -> Unit,
     onSandboxTextChange: (String) -> Unit,
@@ -325,14 +321,24 @@ fun MainScreenContent(
     val allPermissionsGranted = uiState.hasAudioPermission && uiState.hasOverlayPermission && uiState.hasAccessibilityPermission
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp).verticalScroll(scrollState).padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            AnimatedVisibility(visible = !uiState.hasValidApiKey, enter = fadeIn(), exit = fadeOut()) { MissingApiKeyPromptCard() }
+            AnimatedVisibility(visible = !uiState.hasValidApiKey, enter = fadeIn(), exit = fadeOut()) {
+                MissingApiKeyPromptCard(modifier = Modifier.clickable(onClick = onOpenAbout))
+            }
             HeroStatusBar(isOverlayRunning = uiState.isOverlayServiceRunning, allPermissionsGranted = allPermissionsGranted, onToggleOverlay = onToggleOverlay, onOpenAbout = onOpenAbout)
-            ApiKeySection(apiKey = uiState.apiKey, onApiKeyChange = onApiKeyChange, isValidating = uiState.isValidatingApiKey, validationResult = uiState.apiKeyValidationResult, isValidationSuccess = uiState.isApiKeyValid, onValidateKey = onValidateApiKey)
-            ModelSelectionSection(selectedModel = uiState.selectedModel, models = uiState.availableModels, onModelSelect = onModelSelect, modifier = Modifier.fillMaxWidth())
             VoiceSandboxSection(
-                useExperimentalOpus = useExperimentalOpus,
-                isOpusSupported = isOpusSupported,
-                onExperimentalOpusChange = onExperimentalOpusChange,isRecording = uiState.isSandboxRecording, isProcessing = uiState.isSandboxProcessing, recordingTimeSeconds = uiState.sandboxRecordingSeconds, transcribedText = uiState.sandboxTranscribedText, onTranscribedTextChange = onSandboxTextChange, selectedMode = uiState.transcriptionMode, onModeSelect = onModeSelect, onStartRecording = onStartSandboxRecording, onStopRecording = onStopSandboxRecording, onClearText = onClearSandboxText, onCopyText = onCopySandboxText, lastErrorMessage = uiState.lastErrorMessage, lastAudioInfo = uiState.lastAudioInfo, onDismissError = onDismissSandboxError)
+                isRecording = uiState.isSandboxRecording,
+                isProcessing = uiState.isSandboxProcessing,
+                recordingTimeSeconds = uiState.sandboxRecordingSeconds,
+                transcribedText = uiState.sandboxTranscribedText,
+                onTranscribedTextChange = onSandboxTextChange,
+                onStartRecording = onStartSandboxRecording,
+                onStopRecording = onStopSandboxRecording,
+                onClearText = onClearSandboxText,
+                onCopyText = onCopySandboxText,
+                lastErrorMessage = uiState.lastErrorMessage,
+                lastAudioInfo = uiState.lastAudioInfo,
+                onDismissError = onDismissSandboxError
+            )
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -349,7 +355,7 @@ fun MissingApiKeyPromptCard(modifier: Modifier = Modifier) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = "Gemini API Key Required", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = colorScheme.onErrorContainer)
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(text = "VoFlow requires a Google AI Studio API key to transcribe speech. Please enter and save your key below to activate dictation.", style = MaterialTheme.typography.bodySmall.copy(color = colorScheme.onErrorContainer.copy(alpha = 0.9f), lineHeight = 16.sp))
+                Text(text = "VoFlow requires a Google AI Studio API key to transcribe speech. Open Settings to add and validate your key.", style = MaterialTheme.typography.bodySmall.copy(color = colorScheme.onErrorContainer.copy(alpha = 0.9f), lineHeight = 16.sp))
             }
         }
     }
