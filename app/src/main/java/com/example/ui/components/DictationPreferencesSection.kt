@@ -23,6 +23,7 @@ fun DictationPreferencesSection(
     onModeSelect: (String) -> Unit,
     useExperimentalOpus: Boolean,
     isOpusSupported: Boolean,
+    isBusy: Boolean,
     onExperimentalOpusChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -74,12 +75,13 @@ fun DictationPreferencesSection(
                     FilterChip(
                         selected = !useExperimentalOpus,
                         onClick = { onExperimentalOpusChange(false) },
+                        enabled = !isBusy,
                         label = { Text("AAC (Recommended)") }
                     )
                     FilterChip(
                         selected = useExperimentalOpus,
                         onClick = { if (isOpusSupported) onExperimentalOpusChange(true) },
-                        enabled = isOpusSupported,
+                        enabled = isOpusSupported && !isBusy,
                         label = { Text("Opus (Experimental)") }
                     )
                 }
