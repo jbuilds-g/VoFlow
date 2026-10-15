@@ -31,8 +31,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,16 +48,11 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun VoiceSandboxSection(
-    useExperimentalOpus: Boolean,
-    isOpusSupported: Boolean,
-    onExperimentalOpusChange: (Boolean) -> Unit,
     isRecording: Boolean,
     isProcessing: Boolean,
     recordingTimeSeconds: Int,
     transcribedText: String,
     onTranscribedTextChange: (String) -> Unit,
-    selectedMode: String,
-    onModeSelect: (String) -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
     onClearText: () -> Unit,
@@ -157,79 +150,6 @@ fun VoiceSandboxSection(
                         }
                     }
                 }
-            }
-
-            // Mode Selector Chips
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    modifier = Modifier.weight(1f),
-                    selected = selectedMode == "smart",
-                    onClick = { onModeSelect("smart") },
-                    label = {
-                        Text(
-                            text = "Smart (Remove Fillers & Auto-Format)",
-                            maxLines = 1
-                        )
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = colorScheme.primaryContainer,
-                        selectedLabelColor = colorScheme.onPrimaryContainer
-                    )
-                )
-
-                FilterChip(
-                    modifier = Modifier.weight(1f),
-                    selected = selectedMode == "verbatim",
-                    onClick = { onModeSelect("verbatim") },
-                    label = {
-                        Text(
-                            text = "Verbatim",
-                            maxLines = 1
-                        )
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = colorScheme.primaryContainer,
-                        selectedLabelColor = colorScheme.onPrimaryContainer
-                    )
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Recording format",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = colorScheme.onSurface
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = !useExperimentalOpus,
-                        onClick = { onExperimentalOpusChange(false) },
-                        enabled = !isRecording && !isProcessing,
-                        label = { Text("AAC (Recommended)") },
-                        shape = RoundedCornerShape(10.dp)
-                    )
-                    FilterChip(
-                        selected = useExperimentalOpus,
-                        onClick = { if (isOpusSupported) onExperimentalOpusChange(true) },
-                        enabled = isOpusSupported && !isRecording && !isProcessing,
-                        label = { Text("Opus (Experimental)") },
-                        shape = RoundedCornerShape(10.dp)
-                    )
-                }
-                Text(
-                    text = when {
-                        !isOpusSupported -> "Opus requires Android 10 or newer. AAC is active on this device."
-                        useExperimentalOpus -> "Experimental: records Opus in an Ogg file. If the device recorder cannot start Opus, VoFlow falls back to AAC."
-                        else -> "AAC is the default format. Opus is an experimental option for Android 10 and newer."
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant
-                )
             }
 
             // Text Output Area
