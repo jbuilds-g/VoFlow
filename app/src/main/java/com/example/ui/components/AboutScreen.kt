@@ -68,9 +68,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.DiagnosticLog
-import com.example.ui.components.ApiKeySection
-import com.example.ui.components.ModelSelectionSection
-import com.example.ui.components.DictationPreferencesSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -92,6 +89,7 @@ fun SettingsScreen(
     onModeSelect: (String) -> Unit,
     useExperimentalOpus: Boolean,
     isOpusSupported: Boolean,
+    isDictationBusy: Boolean,
     onExperimentalOpusChange: (Boolean) -> Unit,
     hasAudioPermission: Boolean,
     hasOverlayPermission: Boolean,
@@ -138,6 +136,12 @@ fun SettingsScreen(
             }
         }
 
+        Text(
+            "API & model",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+
         ApiKeySection(
             apiKey = apiKey,
             onApiKeyChange = onApiKeyChange,
@@ -160,6 +164,7 @@ fun SettingsScreen(
             onModeSelect = onModeSelect,
             useExperimentalOpus = useExperimentalOpus,
             isOpusSupported = isOpusSupported,
+            isBusy = isDictationBusy,
             onExperimentalOpusChange = onExperimentalOpusChange,
             modifier = Modifier.fillMaxWidth()
         )
