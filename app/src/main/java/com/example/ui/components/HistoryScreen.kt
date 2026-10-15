@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.media.MediaPlayer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -59,6 +64,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
     var isPlaying by remember { mutableStateOf(false) }
     var showClearDialog by remember { mutableStateOf(false) }
     var deleteId by remember { mutableStateOf<String?>(null) }
+    var selectedEntry by remember { mutableStateOf<TranscriptionHistoryEntry?>(null) }
     var player by remember { mutableStateOf<MediaPlayer?>(null) }
 
     fun stopPlayback() {
@@ -158,12 +164,47 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                         isLoaded = playingId == entry.id,
                         onPlayPause = { playEntry(entry) },
                         onStop = { if (playingId == entry.id) stopPlayback() },
+                        onOpen = { selectedEntry = entry },
+                        onCopy = {
+                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("Transcription", entry.text))
+                        },
                         onDelete = { deleteId = entry.id }
                     )
                 }
                 item { Spacer(Modifier.height(8.dp)) }
             }
         }
+    }
+
+    selectedEntry?.let { entry ->
+        AlertDialog(
+            onDismissRequest = { selectedEntry = null },
+            title = { Text("Transcription") },
+            text = {
+                Column(modifier = Modifier.height(320.dp).fillMaxWidth()) {
+                    Text(
+                        DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(entry.timestampMs)),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        entry.text,
+                        modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Transcription", entry.text))
+                    selectedEntry = null
+                }) { Text("Copy text") }
+            },
+            dismissButton = { TextButton(onClick = { selectedEntry = null }) { Text("Close") } }
+        )
     }
 
     deleteId?.let { id ->
@@ -206,6 +247,8 @@ private fun HistoryEntryCard(
     isLoaded: Boolean,
     onPlayPause: () -> Unit,
     onStop: () -> Unit,
+    onOpen: () -> Unit,
+    onCopy: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,7 +260,22 @@ private fun HistoryEntryCard(
         border = BorderStroke(1.dp, colors.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(entry.text, style = MaterialTheme.typography.bodyLarge, color = colors.onSurface)
+            Text(
+                entry.text,
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen),
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.onSurface,
+                maxLines = 3,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = onOpen) { Text("Read full text") }
+                TextButton(onClick = onCopy) {
+                    Icon(Icons.Rounded.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Copy")
+                }
+            }
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Surface(
