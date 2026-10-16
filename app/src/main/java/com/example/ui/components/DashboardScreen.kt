@@ -35,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.MainUiState
 import com.example.data.TranscriptionHistory
 import com.example.data.TranscriptionHistoryEntry
@@ -66,11 +70,21 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var history by remember { mutableStateOf(emptyList<TranscriptionHistoryEntry>()) }
     var showQuickTest by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    fun refreshHistory() {
         history = TranscriptionHistory.getAll(context)
+    }
+
+    LaunchedEffect(Unit) { refreshHistory() }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) refreshHistory()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val allPermissionsGranted = uiState.hasAudioPermission &&
@@ -104,25 +118,30 @@ fun DashboardScreen(
                 Text("Activity", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), modifier = Modifier.weight(1f))
                 Text("Last 30 days", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                DashboardStatCard(
-                    modifier = Modifier.weight(1f),
-                    icon = { Icon(Icons.Rounded.History, contentDescription = null) },
-                    value = history.size.toString(),
-                    label = "Transcriptions"
-                )
-                DashboardStatCard(
-                    modifier = Modifier.weight(1f),
-                    icon = { Icon(Icons.Rounded.Timer, contentDescription = null) },
-                    value = formatTotalDuration(totalDurationMs),
-                    label = "Dictation time"
-                )
-                DashboardStatCard(
-                    modifier = Modifier.weight(1f),
-                    icon = { Icon(Icons.Rounded.TextFields, contentDescription = null) },
-                    value = String.format(Locale.getDefault(), "%,d", totalWords),
-                    label = "Words"
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    DashboardStatCard(
+                        modifier = Modifier.weight(1f),
+                        icon = { Icon(Icons.Rounded.History, contentDescription = null) },
+                        value = history.size.toString(),
+                        label = "Transcriptions"
+                    )
+                    DashboardStatCard(
+                        modifier = Modifier.weight(1f),
+                        icon = { Icon(Icons.Rounded.Timer, contentDescription = null) },
+                        value = formatTotalDuration(totalDurationMs),
+                        label = "Dictation time"
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    DashboardStatCard(
+                        modifier = Modifier.weight(1f),
+                        icon = { Icon(Icons.Rounded.TextFields, contentDescription = null) },
+                        value = String.format(Locale.getDefault(), "%,d", totalWords),
+                        label = "Words"
+                    )
+                    Spacer(Modifier.weight(1f))
+                }
             }
             if (history.isEmpty()) {
                 Text(
@@ -188,7 +207,7 @@ fun DashboardScreen(
                     ReadinessRow("Gemini API key", uiState.hasValidApiKey, onOpenSettings)
                     if (!allPermissionsGranted || !uiState.hasValidApiKey) {
                         Text(
-                            "Tap a requirement to open Settings and finish setup.",
+                            "Select a requirement to open Settings and finish setup.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
