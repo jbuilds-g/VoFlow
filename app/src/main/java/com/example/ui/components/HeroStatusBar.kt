@@ -90,7 +90,7 @@ fun HeroStatusBar(
                     onClick = onOpenAbout,
                     modifier = Modifier.testTag("about_button")
                 ) {
-                    Icon(Icons.Rounded.Info, contentDescription = "About VoFlow", tint = colorScheme.onSurfaceVariant)
+                    Icon(Icons.Rounded.Info, contentDescription = "Settings and app information", tint = colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -141,7 +141,7 @@ fun HeroStatusBar(
 
             if (!allPermissionsGranted) {
                 Text(
-                    text = "Grant all permissions in About to enable the floating overlay.",
+                    text = "Open Settings to grant permissions and configure your API key.",
                     style = MaterialTheme.typography.bodySmall.copy(color = colorScheme.error, fontWeight = FontWeight.Medium),
                     modifier = Modifier.padding(top = 2.dp)
                 )
