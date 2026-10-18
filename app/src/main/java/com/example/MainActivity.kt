@@ -152,6 +152,9 @@ class MainActivity : ComponentActivity() {
                                     onCopySandboxText = { viewModel.copySandboxText() },
                                     onDismissSandboxError = { viewModel.clearErrorMessage() },
                                     onOpenSettings = { selectedDestination = AppDestination.SETTINGS },
+                                    onRequestAudioPermission = { audioPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) },
+                                    onRequestOverlayPermission = { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) },
+                                    onRequestAccessibilityPermission = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
                                     onOpenHistory = { selectedDestination = AppDestination.HISTORY },
                                     modifier = Modifier.fillMaxSize()
                                 )
