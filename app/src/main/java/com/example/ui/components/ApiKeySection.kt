@@ -252,7 +252,8 @@ fun ApiKeySection(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = validationResult ?: "",
+                        text = validationResult.orEmpty(),
+                        modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = bannerContent,
                             fontWeight = FontWeight.Medium
