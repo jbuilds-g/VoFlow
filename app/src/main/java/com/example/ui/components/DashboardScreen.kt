@@ -1,5 +1,11 @@
 package com.example.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -114,7 +120,7 @@ fun DashboardScreen(
 
         // The in-app dictation test is the primary dashboard entry point.
         Card(
-            modifier = Modifier.fillMaxWidth().clickable { showQuickTest = !showQuickTest },
+            modifier = Modifier.fillMaxWidth().animateContentSize().clickable { showQuickTest = !showQuickTest },
             shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -161,7 +167,11 @@ fun DashboardScreen(
                 )
             }
         }
-        if (showQuickTest) {
+        AnimatedVisibility(
+            visible = showQuickTest,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
             VoiceSandboxSection(
                 isRecording = uiState.isSandboxRecording,
                 isProcessing = uiState.isSandboxProcessing,
