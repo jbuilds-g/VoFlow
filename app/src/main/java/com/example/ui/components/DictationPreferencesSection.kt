@@ -31,7 +31,7 @@ fun DictationPreferencesSection(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         border = BorderStroke(1.dp, colorScheme.outlineVariant)
     ) {
