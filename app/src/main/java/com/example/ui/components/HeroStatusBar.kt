@@ -1,6 +1,12 @@
 package com.example.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +57,7 @@ fun HeroStatusBar(
     )
 
     Card(
-        modifier = modifier.fillMaxWidth().testTag("hero_status_card"),
+        modifier = modifier.fillMaxWidth().animateContentSize().testTag("hero_status_card"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         border = androidx.compose.foundation.BorderStroke(
@@ -139,7 +145,11 @@ fun HeroStatusBar(
                 )
             }
 
-            if (!allPermissionsGranted) {
+            AnimatedVisibility(
+                visible = !allPermissionsGranted,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 Text(
                     text = "Open Settings to grant permissions and configure your API key.",
                     style = MaterialTheme.typography.bodySmall.copy(color = colorScheme.error, fontWeight = FontWeight.Medium),
