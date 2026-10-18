@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -126,7 +127,8 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 20.dp)
+        modifier = modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -141,7 +143,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                 )
             }
             if (entries.isNotEmpty()) {
-                OutlinedButton(onClick = { showClearDialog = true }, shape = RoundedCornerShape(14.dp)) {
+                OutlinedButton(onClick = { showClearDialog = true }, shape = MaterialTheme.shapes.medium) {
                     Icon(Icons.Rounded.DeleteSweep, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Clear")
@@ -183,7 +185,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
             onDismissRequest = { selectedEntry = null },
             title = { Text("Transcription") },
             text = {
-                Column(modifier = Modifier.height(320.dp).fillMaxWidth()) {
+                Column(modifier = Modifier.heightIn(max = 420.dp).fillMaxWidth()) {
                     Text(
                         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(entry.timestampMs)),
                         style = MaterialTheme.typography.labelMedium,
@@ -256,7 +258,7 @@ private fun HistoryEntryCard(
     val colors = MaterialTheme.colorScheme
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = colors.surfaceContainer),
         border = BorderStroke(1.dp, colors.outlineVariant)
     ) {
@@ -330,7 +332,7 @@ private fun HistoryEmptyState(modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
