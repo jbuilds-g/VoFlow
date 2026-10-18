@@ -189,7 +189,7 @@ fun VoiceSandboxSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("dictation_error_banner"),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.errorContainer),
                         border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.error.copy(alpha = 0.5f))
                     ) {
@@ -262,7 +262,7 @@ fun VoiceSandboxSection(
                     modifier = Modifier
                         .height(48.dp)
                         .testTag("sandbox_mic_toggle_button"),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRecording) colorScheme.error else colorScheme.primary,
                         contentColor = if (isRecording) colorScheme.onError else colorScheme.onPrimary
