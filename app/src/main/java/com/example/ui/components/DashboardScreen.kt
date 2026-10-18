@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -251,7 +250,7 @@ fun DashboardScreen(
                 history.take(3).forEach { entry ->
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenHistory),
-                        shape = RoundedCornerShape(18.dp),
+                        shape = MaterialTheme.shapes.large,
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
@@ -278,7 +277,7 @@ fun DashboardScreen(
             Text("Readiness", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
@@ -311,7 +310,7 @@ private fun DashboardStatCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
@@ -323,7 +322,7 @@ private fun DashboardStatCard(
                 modifier = Modifier.size(34.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Surface(shape = RoundedCornerShape(11.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.secondaryContainer) {
                     Box(Modifier.padding(7.dp), contentAlignment = Alignment.Center) {
                         androidx.compose.runtime.CompositionLocalProvider(
                             androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSecondaryContainer
