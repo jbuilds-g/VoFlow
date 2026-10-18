@@ -14,13 +14,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// Standard fallback Material 3 dynamic color schemes
+// Use system-derived colors on Android 12+ and Material 3 fallback schemes on older devices.
 private val DarkFallbackColorScheme = darkColorScheme()
 private val LightFallbackColorScheme = lightColorScheme()
 
 /**
- * AuraVoice Theme using Material 3 Expressive & System Dynamic Color (Android 12+ Wallpaper extraction).
- * Dynamically adapts color tokens (primary, surfaceContainer, onSurface, error, etc.) to the user's system theme.
+ * VoFlow theme foundation.
+ *
+ * Dynamic color remains enabled by default, with a stable Material 3 fallback on Android 7–11.
+ * Typography and shape roles provide consistent defaults across app screens.
  */
 @Composable
 fun MyApplicationTheme(
@@ -52,6 +54,7 @@ fun MyApplicationTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = VoFlowShapes,
         content = content
     )
 }
