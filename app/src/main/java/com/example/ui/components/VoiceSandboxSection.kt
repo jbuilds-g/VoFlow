@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
@@ -68,7 +68,7 @@ fun VoiceSandboxSection(
         modifier = modifier
             .fillMaxWidth()
             .testTag("voice_sandbox_card"),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant)
     ) {
@@ -92,7 +92,7 @@ fun VoiceSandboxSection(
                     Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
@@ -111,7 +111,7 @@ fun VoiceSandboxSection(
                                 fontWeight = FontWeight.Bold,
                                 color = colorScheme.onSurface
                             ),
-                            maxLines = 1
+                            maxLines = 2
                         )
                         Text(
                             text = "Test voice transcription directly inside the app",
@@ -126,7 +126,7 @@ fun VoiceSandboxSection(
                 if (lastAudioInfo != null && !isRecording && !isProcessing) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .background(colorScheme.surfaceContainerHighest)
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
@@ -158,9 +158,9 @@ fun VoiceSandboxSection(
                 onValueChange = onTranscribedTextChange,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
+                    .heightIn(min = 130.dp, max = 240.dp)
                     .testTag("sandbox_text_field"),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 placeholder = {
                     Text(
                         text = if (isRecording) "Listening... speak clearly with thoughts, filler words, or bullet cues..." else "Transcribed text will appear here. Tap the mic below to dictate.",
@@ -225,7 +225,7 @@ fun VoiceSandboxSection(
                             }
                             IconButton(
                                 onClick = onDismissError,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(48.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Close,
@@ -334,7 +334,7 @@ fun DictationProcessingSkeleton() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(colorScheme.surfaceContainerHighest)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
