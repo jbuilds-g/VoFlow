@@ -55,7 +55,7 @@ fun PermissionCard(
         modifier = modifier
             .fillMaxWidth()
             .testTag("${testTagPrefix}_card"),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer
         ),
@@ -83,7 +83,7 @@ fun PermissionCard(
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(
                                 if (isGranted) colorScheme.primaryContainer else colorScheme.surfaceContainerHighest
                             ),
@@ -120,7 +120,7 @@ fun PermissionCard(
                 // Status Badge
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(
                             if (isGranted) colorScheme.primaryContainer else colorScheme.errorContainer
                         )
@@ -159,7 +159,7 @@ fun PermissionCard(
                         .fillMaxWidth()
                         .height(44.dp)
                         .testTag("${testTagPrefix}_action_button"),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primary,
                         contentColor = colorScheme.onPrimary
