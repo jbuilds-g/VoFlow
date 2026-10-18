@@ -98,14 +98,83 @@ fun DashboardScreen(
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Dashboard", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                "Your dictation at a glance",
+                "Your voice, captured.",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Text(
+                "System-wide AI dictation, ready when you are.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // The in-app dictation test is the primary dashboard entry point.
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable { showQuickTest = !showQuickTest },
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Rounded.Mic,
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Try voice dictation",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        if (showQuickTest) "Your dictation workspace is below" else "Speak naturally and see your words appear",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                Icon(
+                    if (showQuickTest) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                    contentDescription = if (showQuickTest) "Collapse dictation test" else "Open dictation test",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+        if (showQuickTest) {
+            VoiceSandboxSection(
+                isRecording = uiState.isSandboxRecording,
+                isProcessing = uiState.isSandboxProcessing,
+                recordingTimeSeconds = uiState.sandboxRecordingSeconds,
+                transcribedText = uiState.sandboxTranscribedText,
+                onTranscribedTextChange = onSandboxTextChange,
+                onStartRecording = onStartSandboxRecording,
+                onStopRecording = onStopSandboxRecording,
+                onClearText = onClearSandboxText,
+                onCopyText = onCopySandboxText,
+                lastErrorMessage = uiState.lastErrorMessage,
+                lastAudioInfo = uiState.lastAudioInfo,
+                onDismissError = onDismissSandboxError
             )
         }
 
@@ -219,46 +288,6 @@ fun DashboardScreen(
             }
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().clickable { showQuickTest = !showQuickTest }.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Rounded.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Quick dictation test", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Test speech recognition without opening another app", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Icon(
-                    if (showQuickTest) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                    contentDescription = if (showQuickTest) "Collapse quick test" else "Expand quick test"
-                )
-            }
-            if (showQuickTest) {
-                Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                VoiceSandboxSection(
-                    isRecording = uiState.isSandboxRecording,
-                    isProcessing = uiState.isSandboxProcessing,
-                    recordingTimeSeconds = uiState.sandboxRecordingSeconds,
-                    transcribedText = uiState.sandboxTranscribedText,
-                    onTranscribedTextChange = onSandboxTextChange,
-                    onStartRecording = onStartSandboxRecording,
-                    onStopRecording = onStopSandboxRecording,
-                    onClearText = onClearSandboxText,
-                    onCopyText = onCopySandboxText,
-                    lastErrorMessage = uiState.lastErrorMessage,
-                    lastAudioInfo = uiState.lastAudioInfo,
-                    onDismissError = onDismissSandboxError,
-                    modifier = Modifier.padding(12.dp)
-                )
-            }
-        }
         Spacer(Modifier.height(12.dp))
     }
 }
