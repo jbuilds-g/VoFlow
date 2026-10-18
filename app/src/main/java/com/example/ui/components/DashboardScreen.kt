@@ -66,6 +66,9 @@ fun DashboardScreen(
     onCopySandboxText: () -> Unit,
     onDismissSandboxError: () -> Unit,
     onOpenSettings: () -> Unit,
+    onRequestAudioPermission: () -> Unit,
+    onRequestOverlayPermission: () -> Unit,
+    onRequestAccessibilityPermission: () -> Unit,
     onOpenHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -201,13 +204,13 @@ fun DashboardScreen(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    ReadinessRow("Microphone permission", uiState.hasAudioPermission, onOpenSettings)
-                    ReadinessRow("Display over other apps", uiState.hasOverlayPermission, onOpenSettings)
-                    ReadinessRow("Accessibility service", uiState.hasAccessibilityPermission, onOpenSettings)
+                    ReadinessRow("Microphone permission", uiState.hasAudioPermission, onRequestAudioPermission)
+                    ReadinessRow("Display over other apps", uiState.hasOverlayPermission, onRequestOverlayPermission)
+                    ReadinessRow("Accessibility service", uiState.hasAccessibilityPermission, onRequestAccessibilityPermission)
                     ReadinessRow("Gemini API key", uiState.hasValidApiKey, onOpenSettings)
                     if (!allPermissionsGranted || !uiState.hasValidApiKey) {
                         Text(
-                            "Select a requirement to open Settings and finish setup.",
+                            "Select a requirement to grant access or configure your API key.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
