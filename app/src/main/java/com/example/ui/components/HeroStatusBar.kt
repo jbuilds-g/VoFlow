@@ -90,7 +90,7 @@ fun HeroStatusBar(
                     onClick = onOpenAbout,
                     modifier = Modifier.testTag("about_button")
                 ) {
-                    Icon(Icons.Rounded.Info, contentDescription = "Settings and app information", tint = colorScheme.onSurfaceVariant)
+                    Icon(Icons.Rounded.Info, contentDescription = "Open Settings", tint = colorScheme.onSurfaceVariant)
                 }
             }
 
