@@ -77,7 +77,7 @@ fun ApiKeySection(
         modifier = modifier
             .fillMaxWidth()
             .testTag("api_key_section_card"),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant)
     ) {
@@ -100,9 +100,9 @@ fun ApiKeySection(
                     Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.medium)
                             .background(colorScheme.primaryContainer)
-                            .border(1.dp, colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                            .border(1.dp, colorScheme.primary.copy(alpha = 0.3f), MaterialTheme.shapes.medium),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -145,7 +145,7 @@ fun ApiKeySection(
                 // Get key web link
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .clickable {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
@@ -180,7 +180,7 @@ fun ApiKeySection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("api_key_input_field"),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 placeholder = {
                     Text(
                         text = "Paste your Google AI Studio API key here",
@@ -238,9 +238,9 @@ fun ApiKeySection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(bannerBg)
-                        .border(1.dp, bannerBorder.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                        .border(1.dp, bannerBorder.copy(alpha = 0.4f), MaterialTheme.shapes.medium)
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -271,7 +271,7 @@ fun ApiKeySection(
                     .fillMaxWidth()
                     .height(48.dp)
                     .testTag("validate_save_key_button"),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 enabled = !isValidating && apiKey.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
@@ -301,7 +301,7 @@ fun ApiKeyValidatingSkeleton() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(colorScheme.surfaceContainerHighest)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
