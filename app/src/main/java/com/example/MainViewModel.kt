@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.audio.AudioCaptureEngine
 import com.example.data.GeminiApiClient
 import com.example.data.SecurePreferences
+import com.example.data.TranscriptionHistory
 import com.example.service.AuraAccessibilityService
 import com.example.service.OverlayService
 import kotlinx.coroutines.Job
@@ -36,6 +37,8 @@ data class MainUiState(
     val isApiKeyValid: Boolean? = null,
     val transcriptionMode: String = "smart",
     val selectedModel: String = "auto",
+    val useExperimentalOpus: Boolean = false,
+    val isOpusSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
     val availableModels: List<String> = emptyList(),
     val isLoadingModels: Boolean = false,
     val isSandboxRecording: Boolean = false,
@@ -56,7 +59,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             apiKey = securePreferences.getApiKey(),
             hasValidApiKey = securePreferences.hasValidApiKey(),
             transcriptionMode = securePreferences.getTranscriptionMode(),
-            selectedModel = securePreferences.getSelectedModel()
+            selectedModel = securePreferences.getSelectedModel(),
+            useExperimentalOpus = securePreferences.isExperimentalOpusEnabled()
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -121,6 +125,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setTranscriptionMode(mode: String) { securePreferences.setTranscriptionMode(mode); _uiState.update { it.copy(transcriptionMode = mode) } }
 
+    fun setExperimentalOpusEnabled(enabled: Boolean) {
+        val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val value = enabled && supported
+        securePreferences.setExperimentalOpusEnabled(value)
+        _uiState.update { it.copy(useExperimentalOpus = value, isOpusSupported = supported) }
+    }
+
     fun toggleOverlayService(enable: Boolean) {
         val context = getApplication<Application>()
         if (enable) {
@@ -149,17 +160,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (file == null || file.length() == 0L) { _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = "No audio was captured (0 bytes). Check microphone permission or speak louder.", feedbackMessage = "No audio recorded.") }; return }
         _uiState.update { it.copy(lastAudioInfo = "Recorded ${file.length() / 1024}KB (${_uiState.value.sandboxRecordingSeconds}s)") }
         viewModelScope.launch {
-            val result = geminiApiClient.transcribeAudio(apiKey = securePreferences.getApiKey(), audioFile = file, mode = _uiState.value.transcriptionMode, selectedModel = _uiState.value.selectedModel)
-            try { file.delete() } catch (_: Exception) { }
+            val mode = _uiState.value.transcriptionMode
+            val selectedModel = _uiState.value.selectedModel
+            val result = geminiApiClient.transcribeAudio(apiKey = securePreferences.getApiKey(), audioFile = file, mode = mode, selectedModel = selectedModel)
             if (result.isSuccess) {
                 val newText = (result.getOrNull() ?: "").trim()
                 if (newText.isBlank()) { _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = "No speech detected in audio. Please speak louder and closer to the microphone.", feedbackMessage = "No speech detected in audio.") }; return@launch }
+                val historyEntry = TranscriptionHistory.save(
+                    context = getApplication(),
+                    sourceAudioFile = file,
+                    text = newText,
+                    durationMs = audioCaptureEngine.lastRecordingDurationMs,
+                    model = geminiApiClient.resolveModel(selectedModel),
+                    mode = mode
+                )
+                if (historyEntry == null) file.delete()
                 _uiState.update { current ->
                     val currentText = current.sandboxTranscribedText
                     val combined = if (currentText.isNotBlank()) { if (currentText.endsWith(" ") || currentText.endsWith("\n")) "$currentText$newText" else "$currentText $newText" } else newText
                     current.copy(isSandboxProcessing = false, sandboxTranscribedText = combined, lastErrorMessage = null, feedbackMessage = "Dictated ${newText.split(" ").size} words successfully!")
                 }
             } else {
+                file.delete()
                 val err = result.exceptionOrNull()?.message ?: "Transcription error"
                 _uiState.update { it.copy(isSandboxProcessing = false, lastErrorMessage = err, feedbackMessage = "Dictation error: $err") }
             }

@@ -32,6 +32,7 @@ class SecurePreferences(context: Context) {
         private const val KEY_TRANSCRIPTION_MODE = "transcription_mode"
         private const val KEY_HAPTIC_FEEDBACK = "haptic_feedback"
         private const val KEY_SELECTED_MODEL = "selected_model"
+        private const val KEY_EXPERIMENTAL_OPUS = "experimental_opus_enabled"
         private const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
     }
 
@@ -72,5 +73,12 @@ class SecurePreferences(context: Context) {
 
     fun setSelectedModel(model: String) {
         prefs.edit().putString(KEY_SELECTED_MODEL, model).apply()
+    }
+
+    fun isExperimentalOpusEnabled(): Boolean =
+        prefs.getBoolean(KEY_EXPERIMENTAL_OPUS, false)
+
+    fun setExperimentalOpusEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_EXPERIMENTAL_OPUS, enabled).apply()
     }
 }

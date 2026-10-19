@@ -5,8 +5,8 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import com.example.data.DiagnosticLog
+import com.example.data.SecurePreferences
 import java.io.File
 
 class AudioCaptureEngine(private val context: Context) {
@@ -23,48 +23,31 @@ class AudioCaptureEngine(private val context: Context) {
     var isRecording: Boolean = false
         private set
 
+    var lastRecordingDurationMs: Long = 0L
+        private set
+
     /**
-     * Starts audio capture with 16kHz mono AAC/m4a encoding into app cache directory.
-     * Uses unique timestamped files to prevent caching or concurrency issues.
+     * Starts 16kHz mono recording. Opus-in-Ogg is experimental on Android 10+;
+     * AAC/m4a remains the default and is used as a fallback if Opus setup fails.
      */
     @Synchronized
     fun startRecording(): Result<File> {
-        if (isRecording) {
-            stopRecording()
+        if (isRecording) stopRecording()
+
+        val requestOpus = SecurePreferences(context).isExperimentalOpusEnabled() &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        if (requestOpus) {
+            try {
+                return startWithFormat(useOpus = true)
+            } catch (e: Exception) {
+                Log.w(TAG, "Experimental Opus recording unavailable; falling back to AAC", e)
+                DiagnosticLog.add("Opus recorder unavailable; falling back to AAC")
+                cleanup()
+            }
         }
 
         return try {
-            val fileName = "aura_audio_${System.currentTimeMillis()}.m4a"
-            val file = File(context.cacheDir, fileName)
-            if (file.exists()) {
-                file.delete()
-            }
-            outputFile = file
-
-            val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(context)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaRecorder()
-            }
-
-            recorder.apply {
-                setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setAudioSamplingRate(SAMPLE_RATE_HZ)
-                setAudioChannels(1) // Mono
-                setAudioEncodingBitRate(64000) // 64 kbps clean voice bitrate
-                setOutputFile(file.absolutePath)
-                prepare()
-                start()
-            }
-
-            mediaRecorder = recorder
-            isRecording = true
-            recordingStartTimeMs = SystemClock.elapsedRealtime()
-            Log.d(TAG, "Audio recording successfully started -> ${file.absolutePath}")
-            Result.success(file)
+            startWithFormat(useOpus = false)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start audio recording", e)
             cleanup()
@@ -72,9 +55,58 @@ class AudioCaptureEngine(private val context: Context) {
         }
     }
 
+    private fun startWithFormat(useOpus: Boolean): Result<File> {
+        val extension = if (useOpus) "ogg" else "m4a"
+        val file = File(context.cacheDir, "voflow_audio_${System.currentTimeMillis()}.$extension")
+        file.delete()
+        outputFile = file
+
+        val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(context)
+        } else {
+            @Suppress("DEPRECATION")
+            MediaRecorder()
+        }
+
+        try {
+            recorder.apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                if (useOpus) {
+                    setOutputFormat(MediaRecorder.OutputFormat.OGG)
+                    setAudioEncoder(MediaRecorder.AudioEncoder.OPUS)
+                    setAudioSamplingRate(SAMPLE_RATE_HZ)
+                    setAudioChannels(1)
+                    setAudioEncodingBitRate(24000)
+                } else {
+                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                    setAudioSamplingRate(SAMPLE_RATE_HZ)
+                    setAudioChannels(1)
+                    setAudioEncodingBitRate(64000)
+                }
+                setOutputFile(file.absolutePath)
+                prepare()
+                start()
+            }
+        } catch (e: Exception) {
+            try { recorder.release() } catch (_: Exception) {}
+            file.delete()
+            outputFile = null
+            throw e
+        }
+
+        mediaRecorder = recorder
+        isRecording = true
+        recordingStartTimeMs = SystemClock.elapsedRealtime()
+        val format = if (useOpus) "experimental Opus/Ogg" else "AAC/m4a"
+        Log.d(TAG, "$format recording started -> ${file.absolutePath}")
+        DiagnosticLog.add("Recording format: $format")
+        return Result.success(file)
+    }
+
     /**
-     * Stops audio capture and returns the generated m4a audio file.
-     * Guarantees a minimum recording duration so MediaRecorder can flush AAC frames without throwing.
+     * Stops audio capture and returns the generated m4a or Ogg file.
+     * Keeps a minimum recording duration so MediaRecorder can flush encoded frames.
      */
     @Synchronized
     fun stopRecording(): File? {
@@ -102,6 +134,7 @@ class AudioCaptureEngine(private val context: Context) {
             isRecording = false
             mediaRecorder = null
 
+            lastRecordingDurationMs = elapsedMs.coerceAtLeast(600L)
             val file = outputFile
             if (file != null && file.exists() && file.length() > 0) {
                 Log.d(TAG, "Recording completed. File: ${file.name}, Size: ${file.length()} bytes")

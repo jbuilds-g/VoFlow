@@ -75,7 +75,22 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 @Composable
-fun AboutScreen(
+fun SettingsScreen(
+    apiKey: String,
+    onApiKeyChange: (String) -> Unit,
+    isValidatingApiKey: Boolean,
+    apiKeyValidationResult: String?,
+    isApiKeyValid: Boolean?,
+    onValidateApiKey: () -> Unit,
+    selectedModel: String,
+    availableModels: List<String>,
+    onModelSelect: (String) -> Unit,
+    transcriptionMode: String,
+    onModeSelect: (String) -> Unit,
+    useExperimentalOpus: Boolean,
+    isOpusSupported: Boolean,
+    isDictationBusy: Boolean,
+    onExperimentalOpusChange: (Boolean) -> Unit,
     hasAudioPermission: Boolean,
     hasOverlayPermission: Boolean,
     hasAccessibilityPermission: Boolean,
@@ -116,14 +131,85 @@ fun AboutScreen(
                 Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text("About VoFlow", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
-                Text("How it works, permissions, and diagnostics", style = MaterialTheme.typography.bodySmall, color = colorScheme.onSurfaceVariant)
+                Text("Settings", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold))
+                Text("API, dictation, permissions, and app information", style = MaterialTheme.typography.bodySmall, color = colorScheme.onSurfaceVariant)
             }
         }
 
+        Text(
+            "API & model",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+
+        ApiKeySection(
+            apiKey = apiKey,
+            onApiKeyChange = onApiKeyChange,
+            isValidating = isValidatingApiKey,
+            validationResult = apiKeyValidationResult,
+            isValidationSuccess = isApiKeyValid,
+            onValidateKey = onValidateApiKey,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        ModelSelectionSection(
+            selectedModel = selectedModel,
+            models = availableModels,
+            onModelSelect = onModelSelect,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        DictationPreferencesSection(
+            transcriptionMode = transcriptionMode,
+            onModeSelect = onModeSelect,
+            useExperimentalOpus = useExperimentalOpus,
+            isOpusSupported = isOpusSupported,
+            isBusy = isDictationBusy,
+            onExperimentalOpusChange = onExperimentalOpusChange,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Permissions", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), modifier = Modifier.padding(horizontal = 4.dp))
+            PermissionCard(
+                title = "Microphone Access",
+                description = "Captures the audio used for voice dictation.",
+                icon = Icons.Rounded.Mic,
+                isGranted = hasAudioPermission,
+                actionButtonText = "Grant Audio Permission",
+                testTagPrefix = "about_permission_audio",
+                onActionClick = onRequestAudioPermission
+            )
+            PermissionCard(
+                title = "Display Over Other Apps",
+                description = "Allows the floating dictation button to appear above other apps.",
+                icon = Icons.Rounded.Layers,
+                isGranted = hasOverlayPermission,
+                actionButtonText = "Allow Draw Over Apps",
+                testTagPrefix = "about_permission_overlay",
+                onActionClick = onRequestOverlayPermission
+            )
+            PermissionCard(
+                title = "Accessibility Service",
+                description = "Detects editable fields and inserts dictated text into the active app.",
+                icon = Icons.Rounded.Accessibility,
+                isGranted = hasAccessibilityPermission,
+                actionButtonText = "Enable Accessibility",
+                testTagPrefix = "about_permission_accessibility",
+                onActionClick = onRequestAccessibilityPermission
+            )
+        }
+
+
+        Text(
+            "App information",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
             border = BorderStroke(1.dp, colorScheme.outlineVariant)
         ) {
@@ -149,7 +235,7 @@ fun AboutScreen(
                         Text("AI Voice Dictation", style = MaterialTheme.typography.bodyMedium, color = colorScheme.onSurfaceVariant)
                     }
                     Box(
-                        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(colorScheme.primaryContainer)
+                        modifier = Modifier.clip(MaterialTheme.shapes.medium).background(colorScheme.primaryContainer)
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Text("v${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = colorScheme.onPrimaryContainer)
@@ -164,7 +250,7 @@ fun AboutScreen(
                     modifier = Modifier.fillMaxWidth().clickable {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jbuilds-g")))
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerHighest)
                 ) {
                     Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -229,37 +315,6 @@ fun AboutScreen(
         }
 
         AboutArchitectureCard()
-
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Permissions", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), modifier = Modifier.padding(horizontal = 4.dp))
-            PermissionCard(
-                title = "Microphone Access",
-                description = "Captures the audio used for voice dictation.",
-                icon = Icons.Rounded.Mic,
-                isGranted = hasAudioPermission,
-                actionButtonText = "Grant Audio Permission",
-                testTagPrefix = "about_permission_audio",
-                onActionClick = onRequestAudioPermission
-            )
-            PermissionCard(
-                title = "Display Over Other Apps",
-                description = "Allows the floating dictation button to appear above other apps.",
-                icon = Icons.Rounded.Layers,
-                isGranted = hasOverlayPermission,
-                actionButtonText = "Allow Draw Over Apps",
-                testTagPrefix = "about_permission_overlay",
-                onActionClick = onRequestOverlayPermission
-            )
-            PermissionCard(
-                title = "Accessibility Service",
-                description = "Detects editable fields and inserts dictated text into the active app.",
-                icon = Icons.Rounded.Accessibility,
-                isGranted = hasAccessibilityPermission,
-                actionButtonText = "Enable Accessibility",
-                testTagPrefix = "about_permission_accessibility",
-                onActionClick = onRequestAccessibilityPermission
-            )
-        }
 
         DiagnosticLogsCard(
             expanded = logsExpanded,
@@ -387,7 +442,7 @@ private fun AboutArchitectureCard(modifier: Modifier = Modifier) {
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
@@ -462,7 +517,7 @@ private fun DiagnosticLogsCard(
                             .height(240.dp)
                             .clip(RoundedCornerShape(12.dp))
                             .background(colorScheme.surface)
-                            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                            .border(1.dp, colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                             .verticalScroll(rememberScrollState())
                             .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)

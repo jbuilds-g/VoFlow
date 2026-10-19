@@ -22,7 +22,7 @@ class GeminiApiClient {
         private const val TAG = "GeminiApiClient"
         private const val API_BASE = "https://generativelanguage.googleapis.com/v1beta"
         private const val MODELS_ENDPOINT = "$API_BASE/models"
-        private const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
+        const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
         private const val MODEL_CACHE_MS = 6 * 60 * 60 * 1000L
     }
 
@@ -34,6 +34,9 @@ class GeminiApiClient {
 
     @Volatile private var cachedModels: List<String>? = null
     @Volatile private var modelCacheTimestamp = 0L
+
+    fun resolveModel(selectedModel: String): String =
+        if (selectedModel == "auto") DEFAULT_MODEL else selectedModel.removePrefix("models/")
 
     suspend fun transcribeAudio(context: Context, audioFile: File, mode: String = "smart"): Result<String> {
         val prefs = SecurePreferences(context)
@@ -57,10 +60,10 @@ class GeminiApiClient {
 
         DiagnosticLog.add("Transcription started (mode: ${mode.lowercase()})")
         try {
-            val model = if (selectedModel == "auto") DEFAULT_MODEL else selectedModel.removePrefix("models/")
+            val model = resolveModel(selectedModel)
             DiagnosticLog.add("Using Gemini model: $model")
             val base64Audio = Base64.encodeToString(audioFile.readBytes(), Base64.NO_WRAP)
-            val result = executeAudioRequest(model, apiKey, base64Audio, mode)
+            val result = executeAudioRequest(model, apiKey, base64Audio, mode, audioMimeType(audioFile))
 
             if (result.isSuccess && result.getOrNull()?.trim().orEmpty().isNotBlank()) {
                 return@withContext Result.success(result.getOrNull()!!.trim())
@@ -94,11 +97,15 @@ class GeminiApiClient {
         }
     }
 
+    private fun audioMimeType(file: File): String =
+        if (file.extension.equals("ogg", ignoreCase = true)) "audio/ogg" else "audio/mp4"
+
     private fun executeAudioRequest(
         model: String,
         apiKey: String,
         base64Audio: String,
-        mode: String
+        mode: String,
+        mimeType: String
     ): Result<String> {
         return try {
             val isTranscribeModel = model == "gemini-3.5-transcribe"
@@ -139,7 +146,7 @@ class GeminiApiClient {
 
             val audioPart = JSONObject().apply {
                 put("inline_data", JSONObject().apply {
-                    put("mime_type", "audio/mp4")
+                    put("mime_type", mimeType)
                     put("data", base64Audio)
                 })
             }
