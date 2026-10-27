@@ -165,6 +165,12 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        Text(
+            "Dictation",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+
         DictationPreferencesSection(
             transcriptionMode = transcriptionMode,
             onModeSelect = onModeSelect,
@@ -321,6 +327,12 @@ fun SettingsScreen(
         }
 
         AboutArchitectureCard()
+
+        Text(
+            "Diagnostics",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
 
         DiagnosticLogsCard(
             expanded = logsExpanded,
