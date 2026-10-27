@@ -94,6 +94,9 @@ fun SettingsScreen(
     hasAudioPermission: Boolean,
     hasOverlayPermission: Boolean,
     hasAccessibilityPermission: Boolean,
+    isLoadingModels: Boolean,
+    modelsLoadError: String?,
+    onRetryLoadModels: () -> Unit,
     onRequestAudioPermission: () -> Unit,
     onRequestOverlayPermission: () -> Unit,
     onRequestAccessibilityPermission: () -> Unit,
@@ -155,6 +158,9 @@ fun SettingsScreen(
         ModelSelectionSection(
             selectedModel = selectedModel,
             models = availableModels,
+            isLoading = isLoadingModels,
+            loadError = modelsLoadError,
+            onRetry = onRetryLoadModels,
             onModelSelect = onModelSelect,
             modifier = Modifier.fillMaxWidth()
         )
