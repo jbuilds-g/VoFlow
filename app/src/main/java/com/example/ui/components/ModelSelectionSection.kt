@@ -54,6 +54,7 @@ fun ModelSelectionSection(
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedButton(
                     onClick = { expanded = true },
+                    enabled = !isLoading && models.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(if (isLoading && models.isEmpty()) "Loading available models…" else modelLabel(selectedModel))
