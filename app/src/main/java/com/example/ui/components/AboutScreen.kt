@@ -10,6 +10,11 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +45,8 @@ import androidx.compose.material.icons.rounded.Layers
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -48,6 +55,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -108,6 +116,10 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
     val logEntries by DiagnosticLog.entries.collectAsState()
     var logsExpanded by remember { mutableStateOf(false) }
+    var apiModelExpanded by remember { mutableStateOf(false) }
+    var dictationExpanded by remember { mutableStateOf(false) }
+    var permissionsExpanded by remember { mutableStateOf(false) }
+    var diagnosticsExpanded by remember { mutableStateOf(false) }
     var logsCopied by remember { mutableStateOf(false) }
     var showLicenseDialog by remember { mutableStateOf(false) }
     var githubProfile by remember { mutableStateOf<GithubProfile?>(null) }
@@ -139,83 +151,97 @@ fun SettingsScreen(
             }
         }
 
-        Text(
-            "API & model",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
-
-        ApiKeySection(
-            apiKey = apiKey,
-            onApiKeyChange = onApiKeyChange,
-            isValidating = isValidatingApiKey,
-            validationResult = apiKeyValidationResult,
-            isValidationSuccess = isApiKeyValid,
-            onValidateKey = onValidateApiKey,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        ModelSelectionSection(
-            selectedModel = selectedModel,
-            models = availableModels,
-            isLoading = isLoadingModels,
-            loadError = modelsLoadError,
-            onRetry = onRetryLoadModels,
-            onModelSelect = onModelSelect,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Text(
-            "Dictation",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
-
-        DictationPreferencesSection(
-            transcriptionMode = transcriptionMode,
-            onModeSelect = onModeSelect,
-            useExperimentalOpus = useExperimentalOpus,
-            isOpusSupported = isOpusSupported,
-            isBusy = isDictationBusy,
-            onExperimentalOpusChange = onExperimentalOpusChange,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Permissions", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), modifier = Modifier.padding(horizontal = 4.dp))
-            PermissionCard(
-                title = "Microphone Access",
-                description = "Captures the audio used for voice dictation.",
-                icon = Icons.Rounded.Mic,
-                isGranted = hasAudioPermission,
-                actionButtonText = "Grant Audio Permission",
-                testTagPrefix = "about_permission_audio",
-                onActionClick = onRequestAudioPermission
+        CollapsibleSettingsSection(
+            title = "AI & Model",
+            subtitle = "API key, connection validation, and model selection",
+            expanded = apiModelExpanded,
+            onToggle = { apiModelExpanded = !apiModelExpanded }
+        ) {
+            ApiKeySection(
+                apiKey = apiKey,
+                onApiKeyChange = onApiKeyChange,
+                isValidating = isValidatingApiKey,
+                validationResult = apiKeyValidationResult,
+                isValidationSuccess = isApiKeyValid,
+                onValidateKey = onValidateApiKey,
+                modifier = Modifier.fillMaxWidth()
             )
-            PermissionCard(
-                title = "Display Over Other Apps",
-                description = "Allows the floating dictation button to appear above other apps.",
-                icon = Icons.Rounded.Layers,
-                isGranted = hasOverlayPermission,
-                actionButtonText = "Allow Draw Over Apps",
-                testTagPrefix = "about_permission_overlay",
-                onActionClick = onRequestOverlayPermission
-            )
-            PermissionCard(
-                title = "Accessibility Service",
-                description = "Detects editable fields and inserts dictated text into the active app.",
-                icon = Icons.Rounded.Accessibility,
-                isGranted = hasAccessibilityPermission,
-                actionButtonText = "Enable Accessibility",
-                testTagPrefix = "about_permission_accessibility",
-                onActionClick = onRequestAccessibilityPermission
+
+            ModelSelectionSection(
+                selectedModel = selectedModel,
+                models = availableModels,
+                isLoading = isLoadingModels,
+                loadError = modelsLoadError,
+                onRetry = onRetryLoadModels,
+                onModelSelect = onModelSelect,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
+        CollapsibleSettingsSection(
+            title = "Dictation",
+            subtitle = "Transcription preferences and audio options",
+            expanded = dictationExpanded,
+            onToggle = { dictationExpanded = !dictationExpanded }
+        ) {
+            DictationPreferencesSection(
+                transcriptionMode = transcriptionMode,
+                onModeSelect = onModeSelect,
+                useExperimentalOpus = useExperimentalOpus,
+                isOpusSupported = isOpusSupported,
+                isBusy = isDictationBusy,
+                onExperimentalOpusChange = onExperimentalOpusChange,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        CollapsibleSettingsSection(
+            title = "Permissions",
+            subtitle = "Microphone, floating button, and accessibility access",
+            expanded = permissionsExpanded,
+            onToggle = { permissionsExpanded = !permissionsExpanded }
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                PermissionCard(
+                    title = "Microphone Access",
+                    description = "Captures the audio used for voice dictation.",
+                    icon = Icons.Rounded.Mic,
+                    isGranted = hasAudioPermission,
+                    actionButtonText = "Grant Audio Permission",
+                    testTagPrefix = "about_permission_audio",
+                    onActionClick = onRequestAudioPermission
+                )
+                PermissionCard(
+                    title = "Display Over Other Apps",
+                    description = "Allows the floating dictation button to appear above other apps.",
+                    icon = Icons.Rounded.Layers,
+                    isGranted = hasOverlayPermission,
+                    actionButtonText = "Allow Draw Over Apps",
+                    testTagPrefix = "about_permission_overlay",
+                    onActionClick = onRequestOverlayPermission
+                )
+                PermissionCard(
+                    title = "Accessibility Service",
+                    description = "Detects editable fields and inserts dictated text into the active app.",
+                    icon = Icons.Rounded.Accessibility,
+                    isGranted = hasAccessibilityPermission,
+                    actionButtonText = "Enable Accessibility",
+                    testTagPrefix = "about_permission_accessibility",
+                    onActionClick = onRequestAccessibilityPermission
+                )
+            }
+        }
+
+        Text(
+            "About VoFlow",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
 
         Text(
             "App information",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
 
@@ -328,27 +354,28 @@ fun SettingsScreen(
 
         AboutArchitectureCard()
 
-        Text(
-            "Diagnostics",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
-
-        DiagnosticLogsCard(
-            expanded = logsExpanded,
-            entries = logEntries,
-            onToggle = { logsExpanded = !logsExpanded },
-            onClear = { DiagnosticLog.clear() },
-            onCopy = {
-                val text = logEntries.joinToString("\\n") { entry ->
-                    "${entry.timestamp}  ${entry.message}"
-                }
-                val clipboard = context.getSystemService(ClipboardManager::class.java)
-                clipboard?.setPrimaryClip(ClipData.newPlainText("VoFlow diagnostic logs", text))
-                logsCopied = true
-            },
-            copyLabel = if (logsCopied) "Logs copied" else "Copy logs"
-        )
+        CollapsibleSettingsSection(
+            title = "Diagnostics & Logs",
+            subtitle = "Troubleshooting information for investigating issues",
+            expanded = diagnosticsExpanded,
+            onToggle = { diagnosticsExpanded = !diagnosticsExpanded }
+        ) {
+            DiagnosticLogsCard(
+                expanded = logsExpanded,
+                entries = logEntries,
+                onToggle = { logsExpanded = !logsExpanded },
+                onClear = { DiagnosticLog.clear() },
+                onCopy = {
+                    val text = logEntries.joinToString("\\n") { entry ->
+                        "${entry.timestamp}  ${entry.message}"
+                    }
+                    val clipboard = context.getSystemService(ClipboardManager::class.java)
+                    clipboard?.setPrimaryClip(ClipData.newPlainText("VoFlow diagnostic logs", text))
+                    logsCopied = true
+                },
+                copyLabel = if (logsCopied) "Logs copied" else "Copy logs"
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
     }
@@ -396,6 +423,70 @@ SOFTWARE.""",
                 }
             }
         )
+    }
+}
+
+
+@Composable
+private fun CollapsibleSettingsSection(
+    title: String,
+    subtitle: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(
+                containerColor = if (expanded) colorScheme.secondaryContainer else colorScheme.surfaceContainer
+            ),
+            border = BorderStroke(1.dp, colorScheme.outlineVariant)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (expanded) colorScheme.onSecondaryContainer else colorScheme.onSurface
+                    )
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (expanded) colorScheme.onSecondaryContainer else colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Rounded.ExpandMore else Icons.Rounded.ChevronRight,
+                    contentDescription = if (expanded) "Collapse $title" else "Expand $title",
+                    tint = if (expanded) colorScheme.onSecondaryContainer else colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                content()
+            }
+        }
     }
 }
 
