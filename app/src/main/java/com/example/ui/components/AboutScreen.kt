@@ -55,7 +55,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -115,7 +114,6 @@ fun SettingsScreen(
     val colorScheme = MaterialTheme.colorScheme
     val scrollState = rememberScrollState()
     val logEntries by DiagnosticLog.entries.collectAsState()
-    var logsExpanded by remember { mutableStateOf(false) }
     var apiModelExpanded by remember { mutableStateOf(false) }
     var dictationExpanded by remember { mutableStateOf(false) }
     var permissionsExpanded by remember { mutableStateOf(false) }
@@ -361,9 +359,9 @@ fun SettingsScreen(
             onToggle = { diagnosticsExpanded = !diagnosticsExpanded }
         ) {
             DiagnosticLogsCard(
-                expanded = logsExpanded,
+                expanded = true,
                 entries = logEntries,
-                onToggle = { logsExpanded = !logsExpanded },
+                onToggle = {},
                 onClear = { DiagnosticLog.clear() },
                 onCopy = {
                     val text = logEntries.joinToString("\\n") { entry ->
