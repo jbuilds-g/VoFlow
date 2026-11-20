@@ -97,6 +97,9 @@ class MainActivity : ComponentActivity() {
                     viewModel.refreshPermissionStates()
                     if (!isGranted) Toast.makeText(this, "Microphone permission is required for dictation", Toast.LENGTH_SHORT).show()
                 }
+                LaunchedEffect(selectedDestination) {
+                    if (selectedDestination == AppDestination.SETTINGS) viewModel.loadAvailableModels()
+                }
                 LaunchedEffect(uiState.feedbackMessage) {
                     uiState.feedbackMessage?.let { msg -> snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Short); viewModel.clearFeedback() }
                 }
@@ -125,6 +128,9 @@ class MainActivity : ComponentActivity() {
                                     onValidateApiKey = { viewModel.validateAndSaveApiKey() },
                                     selectedModel = uiState.selectedModel,
                                     availableModels = uiState.availableModels,
+                                    isLoadingModels = uiState.isLoadingModels,
+                                    modelsLoadError = uiState.modelsLoadError,
+                                    onRetryLoadModels = { viewModel.loadAvailableModels(forceRefresh = true) },
                                     onModelSelect = { viewModel.setSelectedModel(it) },
                                     transcriptionMode = uiState.transcriptionMode,
                                     onModeSelect = { viewModel.setTranscriptionMode(it) },

@@ -41,6 +41,7 @@ data class MainUiState(
     val isOpusSupported: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
     val availableModels: List<String> = emptyList(),
     val isLoadingModels: Boolean = false,
+    val modelsLoadError: String? = null,
     val isSandboxRecording: Boolean = false,
     val isSandboxProcessing: Boolean = false,
     val sandboxRecordingSeconds: Int = 0,
@@ -109,11 +110,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun loadAvailableModels(forceRefresh: Boolean = false) {
         val key = securePreferences.getApiKey()
         if (key.isBlank()) return
-        _uiState.update { it.copy(isLoadingModels = true) }
+        _uiState.update { it.copy(isLoadingModels = true, modelsLoadError = null) }
         viewModelScope.launch {
             val result = geminiApiClient.getAvailableFlashModels(key, forceRefresh)
             _uiState.update {
-                it.copy(isLoadingModels = false, availableModels = result.getOrElse { emptyList() })
+                val models = result.getOrElse { emptyList() }
+                it.copy(isLoadingModels = false, availableModels = models, modelsLoadError = if (result.isFailure) result.exceptionOrNull()?.message ?: "Could not load models. Check your API key and connection." else null)
             }
         }
     }
